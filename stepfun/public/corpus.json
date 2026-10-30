@@ -1,0 +1,54 @@
+{
+  "documents": [
+    {
+      "id": "vinegar-sign",
+      "title": "客栈招牌酒",
+      "text": "客栈老板把招牌酒换成了醋。客人下次进门时，老板只提这件事，不提别的饮料。记号 VINEGAR8841。"
+    },
+    {
+      "id": "west-lake",
+      "title": "西湖断桥",
+      "text": "断桥在杭州西湖白堤东端。冬天雪后，桥面残留的雪会让桥看起来是断的。"
+    },
+    {
+      "id": "hybrid-note",
+      "title": "混合检索笔记",
+      "text": "混合检索把向量相似和全文关键词放进同一次数据库查询，由数据库排序，而不是应用分别取回后再拼接。"
+    },
+    {
+      "id": "webgpu-note",
+      "title": "浏览器推理",
+      "text": "文档向量应在浏览器里计算。支持 WebGPU 时用显卡，不支持时改用 WASM，并在页面上写明当前后端。"
+    },
+    {
+      "id": "resume-note",
+      "title": "秋招投递",
+      "text": "投递前只改写简历里已经出现过的项目，不新编公司、数字或奖项。截止日期不明就写截止日期未知。"
+    },
+    {
+      "id": "coffee-note",
+      "title": "手冲咖啡",
+      "text": "手冲一杯用 15 克咖啡粉，水温 92 摄氏度，先闷蒸 30 秒，总注水到 240 克。"
+    },
+    {
+      "id": "moon-note",
+      "title": "月球样品",
+      "text": "嫦娥五号从月球正面风暴洋取回样品。这些样品含有玄武岩，用来研究火山活动的年代。"
+    },
+    {
+      "id": "metro-note",
+      "title": "地铁换乘",
+      "text": "从人民广场到静安寺，二号线往徐泾东方向坐两站。高峰时步行换乘比再绕一号线更省时间。"
+    }
+  ],
+  "queries": [
+    { "text": "老板把酒换成了什么", "relevant": "vinegar-sign" },
+    { "text": "VINEGAR8841", "relevant": "vinegar-sign" },
+    { "text": "雪后看起来断开的桥在哪", "relevant": "west-lake" },
+    { "text": "向量和关键词由谁一起排序", "relevant": "hybrid-note" },
+    { "text": "没有显卡时浏览器用什么算向量", "relevant": "webgpu-note" },
+    { "text": "手冲咖啡粉用多少克", "relevant": "coffee-note" },
+    { "text": "月球样品是哪次任务取回的", "relevant": "moon-note" },
+    { "text": "人民广场去静安寺坐哪条线", "relevant": "metro-note" }
+  ]
+}

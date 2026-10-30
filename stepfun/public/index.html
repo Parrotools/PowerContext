@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>端侧迷你知识库</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">seekdb × 阶跃星辰</p>
+      <h1>端侧迷你知识库</h1>
+    </div>
+    <p id="backend" class="pill">正在选择推理后端</p>
+  </header>
+
+  <section class="status" id="status">正在连接本机 seekdb。</section>
+
+  <main>
+    <section>
+      <h2>导入</h2>
+      <label>
+        知识库
+        <span class="row">
+          <select id="library"></select>
+          <button id="use-library" type="button" disabled>切换</button>
+        </span>
+      </label>
+      <label>
+        新知识库名称
+        <span class="row">
+          <input id="new-library" maxlength="32" placeholder="例如 course-notes" autocomplete="off">
+          <button id="create-library" type="button" disabled>使用</button>
+        </span>
+      </label>
+      <label>
+        文本
+        <textarea id="source" rows="8" placeholder="粘贴一篇或几篇笔记。空行会把文本分成多条。"></textarea>
+      </label>
+      <div class="row">
+        <button id="import-text" type="button" disabled>导入文本</button>
+        <button id="import-sample" type="button" disabled>导入内置语料</button>
+        <button id="reset-library" type="button" disabled>清空当前知识库</button>
+      </div>
+      <p id="import-log" class="log"></p>
+    </section>
+
+    <section>
+      <h2>检索</h2>
+      <label>
+        问题
+        <input id="query" placeholder="例如：老板把酒换成了什么" autocomplete="off">
+      </label>
+      <button id="search" type="button" disabled>检索</button>
+      <p id="search-log" class="log"></p>
+      <ol id="results"></ol>
+    </section>
+  </main>
+
+  <section class="measure">
+    <h2>测量</h2>
+    <p>用同一批内置语料和 8 个查询，依次测量 FP32 基线、FP16 + WebGPU、FP16 + WASM。每次先预热，再重复 3 次，页面报告中位数。原始记录写入 <code>results/latest.json</code>。</p>
+    <button id="measure" type="button" disabled>开始测量</button>
+    <pre id="measure-log"></pre>
+  </section>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

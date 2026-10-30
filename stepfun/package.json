@@ -1,0 +1,16 @@
+{
+  "name": "stepfun-mini-kb",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "self-check": "node server.mjs --self-check"
+  },
+  "dependencies": {
+    "@oceanbase/seekdb-node": "1.4.0",
+    "seekdb": "1.4.0"
+  }
+}

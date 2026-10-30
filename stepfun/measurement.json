@@ -1,0 +1,63 @@
+{
+  "model": "Xenova/all-MiniLM-L6-v2",
+  "measuredAt": "2026-10-30T16:49:43.154Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+  "rows": [
+    {
+      "label": "fp32-wasm",
+      "dtype": "fp32",
+      "device": "wasm",
+      "host": "https://huggingface.co/",
+      "onnxBytes": 90387606,
+      "loadMs": 68980,
+      "embedMs": 344,
+      "embedDocsPerSec": 23.28,
+      "writeMs": 100,
+      "refreshMs": 548,
+      "searchable": true,
+      "queryEmbedMs": 20,
+      "searchMs": 10,
+      "e2eMs": 29,
+      "recallAt3": 1,
+      "ndcgAt3": 0.954
+    },
+    {
+      "label": "fp16-webgpu",
+      "dtype": "fp16",
+      "device": "webgpu",
+      "host": "https://huggingface.co/",
+      "onnxBytes": 45297825,
+      "loadMs": 481,
+      "embedMs": 28,
+      "embedDocsPerSec": 285.71,
+      "writeMs": 55,
+      "refreshMs": 505,
+      "searchable": true,
+      "queryEmbedMs": 16,
+      "searchMs": 10,
+      "e2eMs": 25,
+      "recallAt3": 1,
+      "ndcgAt3": 0.954
+    },
+    {
+      "label": "fp16-wasm",
+      "dtype": "fp16",
+      "device": "wasm",
+      "host": "https://huggingface.co/",
+      "onnxBytes": 45297825,
+      "loadMs": 360,
+      "embedMs": 364,
+      "embedDocsPerSec": 21.97,
+      "writeMs": 38,
+      "refreshMs": 808,
+      "searchable": true,
+      "queryEmbedMs": 31,
+      "searchMs": 9,
+      "e2eMs": 40,
+      "recallAt3": 1,
+      "ndcgAt3": 0.954,
+      "batch1Ms": 558,
+      "batch8Ms": 364
+    }
+  ]
+}
