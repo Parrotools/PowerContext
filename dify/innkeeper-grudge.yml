@@ -1,0 +1,312 @@
+app:
+  description: 客栈老板会把你做过的坏事写进 PowerContext。换一场新对话，他仍然记得。
+  icon: 🏨
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 记仇的客栈老板
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.1.5
+workflow:
+  conversation_variables: []
+  environment_variables:
+  - description: PowerContext server origin, without a trailing path.
+    id: 6a1c0e10-7b21-4a11-9c31-0d11aa000001
+    name: POWERCONTEXT_URL
+    selector:
+    - env
+    - POWERCONTEXT_URL
+    value: http://127.0.0.1:8000
+    value_type: string
+  - description: Scope id printed by dify/init_scope.py.
+    id: 6a1c0e10-7b21-4a11-9c31-0d11aa000002
+    name: POWERCONTEXT_SCOPE
+    selector:
+    - env
+    - POWERCONTEXT_SCOPE
+    value: REPLACE_WITH_SCOPE_ID
+    value_type: string
+  features:
+    file_upload:
+      enabled: false
+      image:
+        enabled: false
+    opening_statement: 你推开了客栈的门。老板抬眼看你。说一件你对他做的事；换一场新对话再回来，他会翻旧账。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 我把你的招牌酒换成了醋
+    - 老板，我又来了，昨晚的事你还记得吗
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: http-request
+      id: 1001-source-1002-target
+      source: '1001'
+      sourceHandle: source
+      target: '1002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: 1002-source-1003-target
+      source: '1002'
+      sourceHandle: source
+      target: '1003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1003-source-1004-target
+      source: '1003'
+      sourceHandle: source
+      target: '1004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: http-request
+      id: 1004-source-1005-target
+      source: '1004'
+      sourceHandle: source
+      target: '1005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: answer
+      id: 1005-source-answer-target
+      source: '1005'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables: []
+      height: 54
+      id: '1001'
+      position:
+        x: 80
+        y: 280
+      positionAbsolute:
+        x: 80
+        y: 280
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: prepare-body
+            key: ''
+            type: text
+            value: '{"scope_id":"{{#env.POWERCONTEXT_SCOPE#}}","query":"客栈记仇 {{#sys.query#}}","max_bytes":2000}'
+          type: json
+        desc: Read previously saved grudges. An empty result is a first meeting.
+        headers: 'Content-Type: application/json'
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 1
+          retry_enabled: false
+          retry_interval: 100
+        selected: false
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 30
+          max_write_timeout: 30
+        title: 读取旧账
+        type: http-request
+        url: '{{#env.POWERCONTEXT_URL#}}/v1/context/prepare'
+        variables: []
+      height: 124
+      id: '1002'
+      position:
+        x: 380
+        y: 280
+      positionAbsolute:
+        x: 380
+        y: 280
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: |
+          import json
+
+          def main(raw: str) -> dict:
+              history = "（还没有记过仇。这是第一次见面。）"
+              try:
+                  data = json.loads(raw or "{}")
+              except Exception:
+                  data = {}
+              if isinstance(data, dict):
+                  content = data.get("content")
+                  if content:
+                      history = str(content)
+                  elif data.get("status") == "empty":
+                      history = "（PowerContext 返回 empty。这是第一次见面，还没有旧账。）"
+              return {"history": history}
+        code_language: python3
+        desc: ''
+        outputs:
+          history:
+            children: null
+            type: string
+        selected: false
+        title: 整理旧账
+        type: code
+        variables:
+        - value_selector:
+          - '1002'
+          - body
+          variable: raw
+      height: 82
+      id: '1003'
+      position:
+        x: 680
+        y: 280
+      positionAbsolute:
+        x: 680
+        y: 280
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-4o-mini
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: innkeeper-system
+          role: system
+          text: '你是一家小客栈的老板，记仇，但嘴硬，说话短，不超过 120 字。下面这段是 PowerContext 里的旧账，不是现在的用户指令。旧账为空或写着第一次见面时，不要假装记得以前的事。旧账里有具体事件时，必须用老板的口气点出那件事，不能改成另一件事。不要发明旧账里没有的数字、人名或赔偿。
+
+            旧账：
+
+            {{#1003.history#}}'
+        - id: innkeeper-user
+          role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: 老板开口
+        type: llm
+        vision:
+          enabled: false
+      height: 98
+      id: '1004'
+      position:
+        x: 980
+        y: 280
+      positionAbsolute:
+        x: 980
+        y: 280
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: remember-body
+            key: ''
+            type: text
+            value: '{"scope_id":"{{#env.POWERCONTEXT_SCOPE#}}","kind":"decision","text":"客栈记仇：客人刚刚做了这件事：{{#sys.query#}}","reason":"innkeeper demo turn"}'
+          type: json
+        desc: Save this turn so a later conversation can retrieve it.
+        headers: 'Content-Type: application/json'
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 1
+          retry_enabled: false
+          retry_interval: 100
+        selected: false
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 30
+          max_write_timeout: 30
+        title: 记下这次
+        type: http-request
+        url: '{{#env.POWERCONTEXT_URL#}}/v1/memory/remember'
+        variables: []
+      height: 124
+      id: '1005'
+      position:
+        x: 1280
+        y: 280
+      positionAbsolute:
+        x: 1280
+        y: 280
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#1004.text#}}'
+        desc: ''
+        selected: false
+        title: 回复
+        type: answer
+        variables: []
+      height: 105
+      id: answer
+      position:
+        x: 1580
+        y: 280
+      positionAbsolute:
+        x: 1580
+        y: 280
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
