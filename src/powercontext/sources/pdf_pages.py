@@ -20,7 +20,9 @@ import hashlib
 import io
 import math
 import re
+import unicodedata
 from collections import Counter
+from itertools import pairwise
 from typing import Any, ClassVar
 from urllib.parse import quote, unquote
 
@@ -233,10 +235,16 @@ _QUESTION_TYPE_HINTS: dict[str, frozenset[str]] = {
         "receivable",
         "cash",
         "balance",
+        "capital",
+        "intensive",
+        "turnover",
+        "sheet",
     ]),
     "cashflow": frozenset([
         "cash",
         "flow",
+        "capital",
+        "intensive",
         "capex",
         "expenditure",
         "dividend",
@@ -327,10 +335,38 @@ def parse_pdf_document(value: PDFDocumentInput, /) -> tuple[PDFPageInput, ...]:
             document_id=document_id,
             document_sha256=document_sha256,
             page_number=number,
-            text=text,
+            text=_fit_page_text(document_id, text),
         )
         for number, text in enumerate(_extract_pages(value.content), start=1)
     )
+
+
+# A page becomes one Memory entry whose text is ``DOCUMENT_ID\nPAGE_TEXT`` and must fit the entry byte bound.
+_MEMORY_ENTRY_TEXT_BYTES = 8192
+
+
+def _entry_bytes(document_id: str, text: str, /) -> int:
+    return len(unicodedata.normalize("NFC", f"{document_id}\n{text}".strip()).encode("utf-8"))
+
+
+def _fit_page_text(document_id: str, text: str, /) -> str:
+    """Keep an unusually dense page storable: collapse layout whitespace, then trim the tail at a word."""
+
+    if _entry_bytes(document_id, text) <= _MEMORY_ENTRY_TEXT_BYTES:
+        return text
+    text = re.sub(r" ?\n ?", "\n", re.sub(r"[ \t]+", " ", text)).strip()
+    if _entry_bytes(document_id, text) <= _MEMORY_ENTRY_TEXT_BYTES:
+        return text
+    low, high = 0, len(text)
+    while low < high:
+        middle = (low + high + 1) // 2
+        if _entry_bytes(document_id, text[:middle]) <= _MEMORY_ENTRY_TEXT_BYTES:
+            low = middle
+        else:
+            high = middle - 1
+    cut = text[:low]
+    boundary = max(cut.rfind(" "), cut.rfind("\n"))
+    return cut[:boundary].rstrip() if boundary > 0 else cut
 
 
 def _reject_encrypted_pdf() -> None:
@@ -543,7 +579,23 @@ def _statement_type_score(question_types: set[str], page_stems: set[str], title_
         score += 4.0 * min(present / max(len(vocabulary) * 0.5, 1.0), 1.0)
         if sum(1 for stem in vocabulary if stem in title_stems) >= 2:
             score += 4.0
+        if "consolidated" in title_stems and any(
+            heading <= title_stems for heading in _STATEMENT_HEADINGS.get(question_type, ())
+        ):
+            score += 12.0
     return score
+
+
+# Title stems that mark the primary financial statement page of each statement type.
+_STATEMENT_HEADINGS: dict[str, tuple[frozenset[str], ...]] = {
+    "income": (
+        frozenset(["statement", "income"]),
+        frozenset(["statement", "operation"]),
+        frozenset(["statement", "earning"]),
+    ),
+    "balance": (frozenset(["balance", "sheet"]), frozenset(["financial", "position"])),
+    "cashflow": (frozenset(["cash", "flow"]),),
+}
 
 
 async def search_pdf_pages(
@@ -592,7 +644,8 @@ async def search_pdf_pages(
         }
         locations.discard(None)
         scored.append((score, record, min(locations) if locations else None))
-    scored.sort(key=lambda item: item[0], reverse=True)
+    routed = _route_document(question, token_counts, scored)
+    scored.sort(key=lambda item: (item[2] is not None and item[2][:2] == routed, item[0]), reverse=True)
 
     selected = _select_pages(scored, limit)
     return tuple(
@@ -603,6 +656,80 @@ async def search_pdf_pages(
         )
         for _score, record, _location in selected[:limit]
     )
+
+
+def _question_grams(question: str, /) -> set[str]:
+    """Question tokens, short adjacent concatenations ("american express"), and FY22-style years."""
+
+    tokens = _QUERY_TOKEN.findall(question.lower())
+    grams = set(tokens)
+    for size in (2, 3):
+        grams.update("".join(tokens[index : index + size]) for index in range(len(tokens) - size + 1))
+    grams.update(f"20{token}" for token in tokens if len(token) == 2 and token.isdigit())
+    years = [gram for gram in grams if _YEAR_TOKEN.fullmatch(gram)]
+    quarters = [after for before, after in pairwise(tokens) if before == "q" and after in {"1", "2", "3", "4"}]
+    grams.update(f"{year}q{quarter}" for year in years for quarter in quarters)
+    return grams
+
+
+def _route_document(
+    question: str,
+    token_counts: list[tuple[Any, Counter[str], set[str]]],
+    scored: list[tuple[float, Any, tuple[str, str, int] | None]],
+    /,
+) -> tuple[str, str] | None:
+    """Pick the stored document a question is about from its ID and its distinctive vocabulary."""
+
+    pages: dict[tuple[str, str], list[set[str]]] = {}
+    for (_record, tokens, _title), (_score, _same, location) in zip(token_counts, scored, strict=True):
+        if location is not None:
+            pages.setdefault(location[:2], []).append({_stem(token) for token in tokens})
+    if len(pages) < 2:
+        return None
+    grams = _question_grams(question)
+    documents = list(pages)
+    id_parts = {
+        document: {part for part in re.split(r"[^a-z0-9]+", document[0].lower()) if part} for document in documents
+    }
+    id_tokens = {document: set(_QUERY_TOKEN.findall(document[0].lower())) for document in documents}
+    part_frequency = Counter(part for parts in id_parts.values() for part in parts)
+    token_frequency = Counter(token for tokens in id_tokens.values() for token in tokens)
+    terms = {_stem(term) for term in _content_terms(question)}
+    term_documents = {
+        term: {document for document, page_tokens in pages.items() if any(term in tokens for tokens in page_tokens)}
+        for term in terms
+    }
+    count = len(documents)
+    best, best_score = None, 0.0
+    for document in documents:
+        score = 0.0
+        for part in id_parts[document] & grams:
+            score += 4.0 * math.log(1.0 + count / part_frequency[part])
+        for token in id_tokens[document] & grams:
+            if len(token) > 1 or token.isdigit():
+                score += 2.0 * math.log(1.0 + count / token_frequency[token])
+        score += _distinctive_share(document, pages[document], term_documents, count)
+        if score > best_score:
+            best, best_score = document, score
+    return best
+
+
+def _distinctive_share(
+    document: tuple[str, str],
+    page_stems: list[set[str]],
+    term_documents: dict[str, set[tuple[str, str]]],
+    count: int,
+    /,
+) -> float:
+    """Weight question terms found in few documents by how many of this document's pages carry them."""
+
+    score = 0.0
+    for term, holders in term_documents.items():
+        if document not in holders or len(holders) == count:
+            continue
+        share = sum(1 for stems in page_stems if term in stems) / len(page_stems)
+        score += math.log(count / len(holders)) * share * 4.0
+    return score
 
 
 def _select_pages(scored: list[tuple[float, Any, tuple[str, str, int] | None]], limit: int):

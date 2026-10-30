@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
@@ -518,33 +519,28 @@ class PreparedContextBuilder:
                     "entry_version_id": hit.entry_version_id,
                 }
                 entries.append((address, origin, citation, hit.text, None))
-        sentences = {
-            index: _sentence_token_spans(text)
-            for index, (_address, _origin, _citation, text, _extra) in enumerate(entries)
-        }
-        max_run_bytes = max(256, request.max_bytes // 3)
-        candidates: list[_FragmentCandidate] = []
-        for index, (address, origin, citation, text, _extra) in enumerate(entries):
-            for start, end, score in _evidence_spans(text, sentences[index], query_terms, max_run_bytes):
-                candidates.append(
-                    _FragmentCandidate(
-                        score=score,
-                        address=address,
-                        origin=origin,
-                        citation=citation,
-                        start=start,
-                        end=end,
-                        text=text[start:end],
-                    )
-                )
-        candidates.sort(key=lambda candidate: -candidate.score)
-        selected: list[_FragmentCandidate] = []
-        for candidate in candidates:
-            if _rendered_fragment_bytes((*selected, candidate)) <= request.max_bytes:
-                selected.append(candidate)
+        planner = _EvidencePlanner(
+            texts=[text for _address, _origin, _citation, text, _extra in entries],
+            citations=[citation for _address, _origin, citation, _text, _extra in entries],
+            query_terms=query_terms,
+            max_bytes=request.max_bytes,
+        )
+        selected = [
+            _FragmentCandidate(
+                score=score,
+                address=entries[index][0],
+                origin=entries[index][1],
+                citation=entries[index][2],
+                start=start,
+                end=end,
+                text=entries[index][3][start:end],
+            )
+            for index, start, end, score in planner.plan()
+        ]
+        while selected and _rendered_fragment_bytes(selected) > request.max_bytes:
+            selected.pop()
         if not selected:
             return None, (), ()
-        selected.sort(key=lambda candidate: (candidate.address.memory.artifact.artifact_id, candidate.start))
         return (
             _render_fragments(selected),
             tuple(candidate.origin for candidate in selected),
@@ -963,35 +959,160 @@ def _sentence_token_spans(text: str, /) -> tuple[tuple[int, int, tuple[str, ...]
     return tuple(spans)
 
 
-def _score_evidence_span(tokens: tuple[str, ...], query_terms: tuple[str, ...], /) -> float:
-    matched = {token for token in tokens if _evidence_matches(token, query_terms)}
-    return float(len(matched))
+_EVIDENCE_POSITION_WEIGHT = 2.0
 
 
-def _evidence_spans(
-    text: str,
-    sentence_spans: tuple[tuple[int, int, tuple[str, ...]], ...],
-    query_terms: tuple[str, ...],
-    max_run_bytes: int,
-    /,
-) -> tuple[tuple[int, int, float], ...]:
-    """Pick the query-matched sentences of one entry and merge adjacent picks."""
+class _EvidencePlanner:
+    """Grow contiguous sentence runs that maximize query evidence under the rendered byte budget.
 
-    scored = [(start, end, _score_evidence_span(tokens, query_terms)) for start, end, tokens in sentence_spans]
-    scored = [item for item in scored if item[2] > 0.0]
-    if not scored:
-        return ()
-    picked = sorted(scored, key=lambda item: (-item[2], item[0]))[:4]
-    picked.sort(key=lambda item: item[0])
-    merged: list[tuple[int, int, float]] = []
-    for start, end, score in picked:
-        if merged and start - merged[-1][1] <= 1:
-            run_bytes = len(text[merged[-1][0] : end].encode("utf-8"))
-            if run_bytes <= max_run_bytes:
-                merged[-1] = (merged[-1][0], end, merged[-1][2] + score)
-                continue
-        merged.append((start, end, score))
-    return tuple((start, end, score) for start, end, score in merged)
+    Every fragment repeats its full citation in the output, so extending an existing run is usually
+    cheaper than opening a new one; the greedy compares gain per rendered byte, then fills any leftover
+    budget with neighbouring context, ending with a word-aligned partial sentence if needed.
+    """
+
+    def __init__(
+        self,
+        *,
+        texts: Sequence[str],
+        citations: Sequence[dict[str, object]],
+        query_terms: tuple[str, ...],
+        max_bytes: int,
+    ) -> None:
+        self._texts = texts
+        self._citations = citations
+        self._max_bytes = max_bytes
+        self._sentences = [_sentence_token_spans(text) for text in texts]
+        self._scores = self._score_sentences(query_terms)
+        self._base = len(_render_fragments(()).encode("utf-8"))
+        self._item_bytes: dict[tuple[int, int, int], int] = {}
+
+    def _score_sentences(self, query_terms: tuple[str, ...], /) -> list[list[float]]:
+        matched = [
+            [{token for token in tokens if _evidence_matches(token, query_terms)} for _start, _end, tokens in spans]
+            for spans in self._sentences
+        ]
+        total = sum(len(spans) for spans in matched) or 1
+        frequency: dict[str, int] = {}
+        for spans in matched:
+            for tokens in spans:
+                for token in tokens:
+                    frequency[token] = frequency.get(token, 0) + 1
+        weight = {token: math.log(1.0 + total / count) for token, count in frequency.items()}
+        # Abstracts and reports tend to state findings after the background, so later matching
+        # sentences get up to (1 + _EVIDENCE_POSITION_WEIGHT) times their lexical score.
+        return [
+            [
+                sum(weight[token] for token in tokens)
+                * (1.0 + _EVIDENCE_POSITION_WEIGHT * index / max(1, len(spans) - 1))
+                for index, tokens in enumerate(spans)
+            ]
+            for spans in matched
+        ]
+
+    def _span(self, entry: int, low: int, high: int, /) -> tuple[int, int]:
+        sentences = self._sentences[entry]
+        start = sentences[low][0]
+        end = sentences[high - 1][1]
+        text = self._texts[entry]
+        while end > start and text[end - 1].isspace():
+            end -= 1
+        return start, end
+
+    def _bytes(self, entry: int, start: int, end: int, /) -> int:
+        key = (entry, start, end)
+        cached = self._item_bytes.get(key)
+        if cached is None:
+            item = {
+                "citation": self._citations[entry],
+                "content": self._texts[entry][start:end],
+                "start": start,
+                "end": end,
+            }
+            cached = len(json.dumps(item, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) + 1
+            self._item_bytes[key] = cached
+        return cached
+
+    def _run_bytes(self, entry: int, low: int, high: int, /) -> int:
+        return self._bytes(entry, *self._span(entry, low, high))
+
+    def plan(self) -> tuple[tuple[int, int, int, float], ...]:
+        runs: list[list[int]] = []  # [entry, low sentence, high sentence)
+        used = self._base - 1  # the first item adds no separating comma
+        for positive in (True, False):
+            while (choice := self._best_action(runs, used, positive=positive)) is not None:
+                runs, used = choice
+        if not runs:
+            return ()
+        spans = [
+            (entry, *self._span(entry, low, high), sum(self._scores[entry][low:high])) for entry, low, high in runs
+        ]
+        spans = self._fill_partial(spans, used)
+        spans.sort(key=lambda item: (item[0], item[1]))
+        return tuple(spans)
+
+    def _best_action(self, runs: list[list[int]], used: int, *, positive: bool) -> tuple[list[list[int]], int] | None:
+        """Return the next run set: a matching sentence when ``positive``, otherwise run-adjacent context."""
+
+        best = None
+        best_value = 0.0
+        covered = {(entry, index) for entry, low, high in runs for index in range(low, high)}
+        for entry, scores in enumerate(self._scores):
+            for index, score in enumerate(scores):
+                if (entry, index) in covered:
+                    continue
+                left = next((run for run in runs if run[0] == entry and run[2] == index), None)
+                right = next((run for run in runs if run[0] == entry and run[1] == index + 1), None)
+                if positive:
+                    if score <= 0.0:
+                        continue
+                    gain = score
+                elif left is None and right is None:
+                    continue
+                else:
+                    neighbour = self._run_score(left) + self._run_score(right)
+                    gain = 1e-3 * (1.0 + neighbour) + (1e-6 if left is not None else 0.0)
+                new_runs = [run for run in runs if run is not left and run is not right]
+                low = left[1] if left is not None else index
+                high = right[2] if right is not None else index + 1
+                cost = self._run_bytes(entry, low, high)
+                cost -= sum(self._run_bytes(*run) for run in (left, right) if run is not None)
+                total = used + cost
+                if total > self._max_bytes:
+                    continue
+                value = gain / max(cost, 1)
+                if value > best_value:
+                    best_value = value
+                    best = ([*new_runs, [entry, low, high]], total)
+        return best
+
+    def _run_score(self, run: list[int] | None, /) -> float:
+        return 0.0 if run is None else sum(self._scores[run[0]][run[1] : run[2]])
+
+    def _fill_partial(
+        self, spans: list[tuple[int, int, int, float]], used: int, /
+    ) -> list[tuple[int, int, int, float]]:
+        """Spend leftover bytes on a word-aligned extension of the strongest fragment."""
+
+        if not spans:
+            return spans
+        position = max(range(len(spans)), key=lambda index: spans[index][3])
+        entry, start, end, score = spans[position]
+        text = self._texts[entry]
+        limit = len(text)
+        for other_entry, other_start, _other_end, _score in spans:
+            if other_entry == entry and other_start >= end:
+                limit = min(limit, other_start)
+        current = self._bytes(entry, start, end)
+        extended = end
+        for match in re.finditer(r"\S+", text[end:limit]):
+            candidate = end + match.end()
+            if used - current + self._bytes(entry, start, candidate) > self._max_bytes:
+                break
+            extended = candidate
+        if extended == end:
+            return spans
+        spans[position] = (entry, start, extended, score)
+        return spans
 
 
 def _render_fragments(selected: Sequence[_FragmentCandidate], /) -> str:

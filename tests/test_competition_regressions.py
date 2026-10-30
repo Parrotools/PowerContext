@@ -94,6 +94,42 @@ async def test_pdf_neighbors_stay_within_document_revision():
     assert [citation.entry_id for citation in found] == ["a1", "a2"]
 
 
+def test_dense_pdf_page_remains_a_storable_memory_entry():
+    import io
+    import re
+
+    from pypdf import PdfWriter
+    from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
+
+    from powercontext.builtin.artifacts.memory.canonical import normalize_text
+    from powercontext.sources.pdf_pages import PDFDocumentInput, parse_pdf_document
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/F1"): writer._add_object(font)})
+    })
+    lines = [f"Segment revenue line {index} grew 12.5 percent to 4,{index:03d} million." for index in range(140)]
+    stream = DecodedStreamObject()
+    stream.set_data(b"BT /F1 4 Tf 10 785 Td 4.8 TL " + b" ".join(f"({line}) '".encode() for line in lines) + b" ET")
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    buffer = io.BytesIO()
+    writer.write(buffer)
+
+    (parsed,) = parse_pdf_document(PDFDocumentInput(document_id="dense", content=buffer.getvalue()))
+
+    normalize_text(f"dense\n{parsed.text}")
+    expected = re.findall(r"[a-z]+|\d+", " ".join(lines).lower())
+    kept = re.findall(r"[a-z]+|\d+", parsed.text.lower())
+    assert len(" ".join(lines).encode()) > 8192
+    assert kept == expected[: len(kept)] and len(kept) >= 0.9 * len(expected)
+
+
 @pytest.mark.anyio
 async def test_lifecycle_registration_retry_reconciles_and_preserves_citation(monkeypatch):
     from powercontext.artifacts import ArtifactRef
