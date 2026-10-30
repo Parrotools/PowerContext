@@ -166,6 +166,7 @@ from powercontext.builtin.runtime._scope_cache import (
     ScopeCacheObserver,
     ScopeEvictor,
 )
+from powercontext.builtin.runtime.context_pack import ContextPack, ContextPackDelta, ContextPackError
 from powercontext.builtin.runtime.decision_model import DecisionModel
 from powercontext.builtin.runtime.errors import InvalidRuntimeRequestError, TopicMemoryProcessingUnavailableError
 from powercontext.builtin.runtime.models import (
@@ -248,6 +249,7 @@ from powercontext.builtin.runtime.recall_sufficiency import (
     build_recall_candidates,
     recall_effort,
 )
+from powercontext.builtin.runtime.source_lifecycle import LifecycleApplication, available_topic_hits
 from powercontext.builtin.runtime.statistics import RelationalScopedStatistics, overview_selection
 from powercontext.builtin.scope import ScopeApplication, ScopeDescriptor, ScopeSelection
 from powercontext.builtin.scope.subject_sources import SubjectSourceService
@@ -488,6 +490,7 @@ class ScopedSourceApplication:
                             span.set_attributes({_MEMORY_CAPTURE_SOURCE_COUNT: 1})
             except BaseValueConflictError as error:
                 raise SourceConflictError("identity", error.identity) from None
+            self._runtime.notify_source_appended()
             return SourceReceipt(
                 source_ref=SourceRef(source_type=record.source_type, source_id=record.source_id),
                 sequence=record.position,
@@ -504,7 +507,8 @@ class ScopedSourceApplication:
                 )
                 if span is not None:
                     span.set_attributes({_MEMORY_CAPTURE_SOURCE_COUNT: 1})
-            return SourceReceipt(source_ref=context.sources.catalog.as_ref(source), sequence=sequence)
+        self._runtime.notify_source_appended()
+        return SourceReceipt(source_ref=context.sources.catalog.as_ref(source), sequence=sequence)
 
 
 class SourceApplication:
@@ -531,11 +535,13 @@ class ScopedRecordApplication:
         /,
     ) -> SourceRecord:
         async with self._runtime._scope_operation(self.scope_id), self._runtime._locked(self.scope_id):
-            return await self._runtime._records().create_source(
+            record = await self._runtime._records().create_source(
                 self.scope_id,
                 source_type,
                 content,
             )
+        self._runtime.notify_source_appended()
+        return record
 
     async def get_source(self, source_type: str, source_id: str, /) -> SourceRecord:
         async with self._runtime._scope_operation(self.scope_id):
@@ -563,7 +569,9 @@ class ScopedRecordApplication:
         /,
     ) -> ArtifactCreated:
         async with self._runtime._scope_operation(self.scope_id), self._runtime._locked(self.scope_id):
-            return await self._runtime._records().create_artifact(self.scope_id, family, write)
+            created = await self._runtime._records().create_artifact(self.scope_id, family, write)
+        self._runtime.notify_source_appended()
+        return created
 
     async def get_artifact(self, family: str, artifact_id: str, /) -> ArtifactRecord:
         async with self._runtime._scope_operation(self.scope_id):
@@ -723,7 +731,9 @@ class RemoteIngestionApplication:
 
     async def submit(self, request: SubmitSourceObservation, /) -> SourceReceipt:
         async with self._runtime._scope_operation(request.scope_id):
-            return await self._require_service().submit_source_observation(request)
+            receipt = await self._require_service().submit_source_observation(request)
+        self._runtime.notify_source_appended()
+        return receipt
 
     async def commit(self, request: CommitConnectorCheckpoint, /) -> ConnectorCheckpointState:
         async with self._runtime._scope_operation(request.binding.scope_id):
@@ -846,6 +856,24 @@ class ScopedContextApplication:
             if authorize_scopes is not None:
                 await authorize_scopes((self.scope_id, *scope.context_references))
             return await self._prepare(request, scope)
+
+    async def prepare_incremental(
+        self,
+        request: PrepareContextRequest,
+        /,
+        *,
+        base_pack: ContextPack | None = None,
+    ) -> ContextPack | ContextPackDelta:
+        """Prepare this round's context as a full pack or a delta against one base."""
+
+        prepared = await self.prepare(request)
+        target = ContextPack.build(()) if prepared.content is None else ContextPack.from_content(prepared.content)
+        if base_pack is None:
+            return target
+        if not isinstance(base_pack, ContextPack):
+            message = "base pack must be a ContextPack"
+            raise ContextPackError(message)
+        return ContextPackDelta.between(base_pack, target)
 
     async def _prepare(self, request: PrepareContextRequest, scope: ScopeDescriptor, /) -> PreparedContext:
         build, effort = await self._prepare_build(request, scope)
@@ -2569,6 +2597,26 @@ class ScopedMemoryApplication:
                 entry=_entry_record(updated, retired),
             )
 
+    async def reactivate(self, request: RetireMemoryEntryRequest, /) -> MemoryMutationResult:
+        async with self._runtime._context(
+            self.scope_id,
+            embedding_purpose=ModelUsagePurpose.MEMORY_INDEXING,
+        ) as context:
+            async with self._runtime._locked(self.scope_id):
+                service = context.artifacts.memory
+                current, entry = await _current_citation(
+                    service,
+                    context.artifacts.memory_artifact_id,
+                    request.citation,
+                )
+                updated = await service.reactivate(current, entries=(entry,), reason=request.reason)
+            restored = next(item for item in await service.entries(updated) if item.entry_id == entry.entry_id)
+            return MemoryMutationResult(
+                previous_revision=current.revision,
+                memory_ref=updated.as_ref(),
+                entry=_entry_record(updated, restored),
+            )
+
     async def changes(self, *, since_revision: int | None = None) -> MemoryChangesPage:
         async with self._runtime._context(self.scope_id) as context:
             service = context.artifacts.memory
@@ -2683,7 +2731,8 @@ class ScopedTopicMemoryApplication:
                         "unit": "topic-memory",
                     },
                 )
-        return result
+        hits = await available_topic_hits(self._runtime, self.scope_id, result.hits)
+        return result.model_copy(update={"hits": hits})
 
     async def _search_with_embedding(
         self,
@@ -2979,6 +3028,7 @@ class BuiltinRuntime:
         capabilities: RuntimeCapabilities,
         code_service: CodeService | None = None,
         source_window_limit: int = 100,
+        source_count_bindings: tuple[str, ...] = (),
         context_assembly_max_entries: int = 8,
         recall_sufficiency_policy: RecallSufficiencyPolicy | None = None,
         scope_cache_size: int = DEFAULT_SCOPE_CACHE_SIZE,
@@ -3083,6 +3133,7 @@ class BuiltinRuntime:
         self._scheduled_source_runner = scheduled_source_runner
         self._scheduled_experience_runner = scheduled_experience_runner
         self.source_window_limit = source_window_limit
+        self.source_count_bindings = tuple(source_count_bindings)
         self.context_assembly_max_entries = context_assembly_max_entries
         self.recall_sufficiency_policy = recall_sufficiency_policy
         self._scope_cache = ScopeCache(
@@ -3101,6 +3152,7 @@ class BuiltinRuntime:
         self._scheduler_runtime_key: str | None = None
         self.sources = SourceApplication(self)
         self.ingestion = RemoteIngestionApplication(self, remote_ingestion)
+        self.lifecycle = LifecycleApplication(self)
         self.code = CodeApplication(self, code_service or CodeService(CodeConfig()))
         self.context = ContextApplication(self)
         self.experience = ExperienceApplication(self)
@@ -3285,6 +3337,24 @@ class BuiltinRuntime:
                 self._scheduler = None
             self._scope_cache.clear()
             self._closed = True
+
+    def notify_source_appended(self) -> None:
+        """Wake count-threshold processing after one more Source journal entry."""
+
+        supervisor = self.artifact_processing_supervisor
+        if supervisor is None or not self.source_count_bindings:
+            return
+        for binding in self.source_count_bindings:
+            try:
+                supervisor.wake(binding)
+            except Exception as error:
+                log_safely(
+                    logger,
+                    logging.ERROR,
+                    "Source count supervisor wake failed",
+                    exc_info=error,
+                    extra={"event": "artifact_processing.count_wake_failed", "binding": binding},
+                )
 
     @asynccontextmanager
     async def _operation(self) -> AsyncIterator[None]:

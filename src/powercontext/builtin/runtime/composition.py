@@ -97,6 +97,7 @@ from powercontext.builtin.persistence.processing_migration import (
     bootstrap_processing_schema,
 )
 from powercontext.builtin.persistence.scope_search_schema import ensure_scope_search_schema
+from powercontext.builtin.persistence.seekdb.memory_index import SeekDBMemoryIndex
 from powercontext.builtin.persistence.seekdb.profile import SeekDBConfig, SeekDBProfile
 from powercontext.builtin.persistence.skill_distribution_schema import ensure_skill_distribution_schema
 from powercontext.builtin.persistence.sqlite.experience_index import SQLiteExperienceFTSIndex
@@ -596,6 +597,11 @@ async def open_builtin_runtime(
                     prompts=dict(contexts.prompt_registry.capabilities),
                 ),
                 source_window_limit=config.runtime.source_window_limit,
+                source_count_bindings=tuple(
+                    binding.binding_name
+                    for binding in processing_bindings
+                    if binding.source_count_threshold is not None
+                ),
                 context_assembly_max_entries=config.runtime.context_assembly_max_entries,
                 recall_sufficiency_policy=RecallSufficiencyPolicy.from_runtime_config(config.runtime),
                 scope_cache_size=config.runtime.scope_cache_size,
@@ -787,6 +793,7 @@ def _artifact_processing_bindings(  # noqa: C901 - validate and assemble one reg
                 if family == "skill"
                 else SourceProcessingPendingProvider(contexts.database, binding, family),
                 automatic_scope_filter=enabled_profile_scopes if family == "profile" else None,
+                source_count_threshold=getattr(config.runtime, f"{prefix}_source_count_threshold", None),
             )
         )
     _validate_processing_registrations(configured)
@@ -960,10 +967,12 @@ async def open_builtin_contexts(
                 await contexts.aclose_usage_recorder()
         return
     experience_index = OceanBaseExperienceFTSIndex()
-    indexes = [OceanBaseMemoryFTSIndex()]
-    if embedding_model is not None:
-        indexes.append(OceanBaseMemoryVectorIndex(embedding_model.profile))
-    index = CompositeMemoryIndex(*indexes)
+    fts_index = OceanBaseMemoryFTSIndex()
+    vector_index = None if embedding_model is None else OceanBaseMemoryVectorIndex(embedding_model.profile)
+    if isinstance(database, SeekDBConfig):
+        index = fts_index if vector_index is None else SeekDBMemoryIndex(fts_index, vector_index)
+    else:
+        index = CompositeMemoryIndex(*([fts_index] + ([] if vector_index is None else [vector_index])))
     topic_indexes: list[TopicMemoryIndex] = [OceanBaseTopicMemoryFTSIndex()]
     if embedding_model is not None:
         topic_indexes.append(OceanBaseTopicMemoryVectorIndex(embedding_model.profile))

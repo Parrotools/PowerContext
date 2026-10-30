@@ -8,6 +8,8 @@ description: 采集证据、查看 Source 记录并配置后续处理。
 Sources 在信息被筛选为知识之前保留证据。Content Source 保存采集的文本，其他 Source 类型可引用 Connector 提供的材料。
 Work Contract 和 Task Outcome 也会保留 Source 证据。
 
+使用 Python API 解析 PDF 页面时，运行 `uv add "powercontext[pdf]"` 安装可选依赖。
+
 ## 采集与检查
 
 1. 选择已有 Scope。[API Quick Start](../develop/api-quickstart.md)演示通过 `POST /v1/sources/content` 采集内容，

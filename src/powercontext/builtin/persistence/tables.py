@@ -696,6 +696,15 @@ CONNECTOR_CHECKPOINTS_TABLE = Table(
     Column("checkpoint", _canonical_payload_type(), nullable=False),
 )
 
+SOURCE_LIFECYCLE_NODES_TABLE = Table(
+    "pc_source_lifecycle_nodes",
+    SHARED_METADATA,
+    Column("scope_id", identity_string(MAX_SCOPE_ID_LENGTH), primary_key=True),
+    Column("node_id", identity_string(128), primary_key=True),
+    Column("kind", identity_string(16), nullable=False),
+    Column("document", _canonical_payload_type(), nullable=False),
+)
+
 SOURCE_DEFINITION_MANIFESTS_TABLE = Table(
     "pc_source_definition_manifests",
     SHARED_METADATA,
@@ -907,6 +916,7 @@ SHARED_TABLES = (
     ARTIFACT_CANDIDATE_HEADS_TABLE,
     PROFILE_POLICIES_TABLE,
     SOURCE_CURSORS_TABLE,
+    SOURCE_LIFECYCLE_NODES_TABLE,
     ARTIFACT_PROCESSING_LEASES_TABLE,
     ARTIFACT_PROCESSING_BINDING_STATES_TABLE,
     TOPIC_MEMORY_WORK_BUDGETS_TABLE,

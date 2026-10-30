@@ -8,6 +8,8 @@ description: Capture evidence, inspect Source records, and configure processing.
 Sources preserve evidence before it becomes selected knowledge. A Content Source stores captured text; other Source
 types can refer to material supplied by a connector. Work Contracts and Task Outcomes also preserve Source evidence.
 
+For PDF page parsing with the Python API, install the optional dependency with `uv add "powercontext[pdf]"`.
+
 ## Capture and inspect
 
 1. Choose an existing Scope. The [API Quick Start](../develop/api-quickstart.md) demonstrates content capture through

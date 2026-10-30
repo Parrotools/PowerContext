@@ -17,9 +17,10 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from itertools import chain
+from itertools import chain, pairwise
 from typing import TypeVar
 
 from powercontext.artifacts import ArtifactAddress, ArtifactRef
@@ -106,6 +107,30 @@ class PreparedContextBuild:
     origins: tuple[PreparedContextOrigin, ...]
     omissions: PreparedContextOmissions = PreparedContextOmissions()
     code_origins: tuple[CodeEvidenceRef, ...] = ()
+    fragments: tuple[PreparedContextFragment, ...] = ()
+
+
+@dataclass(frozen=True)
+class PreparedContextFragment:
+    """One verbatim excerpt pinned to its exact Memory entry character span."""
+
+    address: MemoryEntryAddress
+    start: int
+    end: int
+    text: str
+
+
+@dataclass(frozen=True)
+class _FragmentCandidate:
+    """One scored, ready-to-pack excerpt before budget admission."""
+
+    score: float
+    address: MemoryEntryAddress
+    origin: PreparedContextOrigin
+    citation: dict[str, object]
+    start: int
+    end: int
+    text: str
 
 
 @dataclass(frozen=True)
@@ -235,6 +260,9 @@ class PreparedContextBuilder:
         if sum(len(candidates.hits) for candidates in experience_candidates) > self.experience_candidate_limit:
             raise PreparedContextInvariantError("experience-candidate-limit")
 
+        if request.evidence_selection:
+            return self._build_evidence_result(request, current_scope_id, memory_candidates)
+
         content, origins, omissions = self._select_entries(
             request=request,
             current_scope_id=current_scope_id,
@@ -254,6 +282,23 @@ class PreparedContextBuilder:
             context=PreparedContext(status="ready", content=content, content_bytes=content_bytes),
             origins=origins,
             omissions=omissions,
+        )
+
+    def _build_evidence_result(self, request, current_scope_id, memory_candidates) -> PreparedContextBuild:
+        content, origins, fragments = self._select_fragments(
+            request=request,
+            current_scope_id=current_scope_id,
+            memory_candidates=memory_candidates,
+        )
+        if content is None:
+            return PreparedContextBuild(context=self.empty(), origins=(), fragments=())
+        content_bytes = len(content.encode("utf-8"))
+        if content_bytes > request.max_bytes:
+            raise PreparedContextInvariantError("output-budget")
+        return PreparedContextBuild(
+            context=PreparedContext(status="ready", content=content, content_bytes=content_bytes),
+            origins=origins,
+            fragments=fragments,
         )
 
     def probe_budget(
@@ -432,6 +477,87 @@ class PreparedContextBuilder:
             return None, (), omissions
         content = render_context_text(included, assembly)
         return content, tuple(origins), omissions
+
+    def _select_fragments(
+        self,
+        *,
+        request: PrepareContextRequest,
+        current_scope_id: str | None,
+        memory_candidates: Sequence[PreparedMemoryCandidates],
+    ) -> tuple[str | None, tuple[PreparedContextOrigin, ...], tuple[PreparedContextFragment, ...]]:
+        """Select query-relevant verbatim excerpts under the full output budget."""
+
+        query_terms = _evidence_query_terms(request.query)
+        entries: list[tuple[MemoryEntryAddress, PreparedContextOrigin, dict[str, object], str, object]] = []
+        for group in memory_candidates:
+            scope_id = None if group.scope_id == current_scope_id else group.scope_id or None
+            seen: set[tuple[str, str]] = set()
+            for hit in group.hits:
+                key = (hit.entry_id, hit.entry_version_id)
+                if key in seen or not hit.text:
+                    continue
+                seen.add(key)
+                memory = ArtifactAddress(scope_id=group.scope_id, artifact=hit.memory_ref)
+                address = MemoryEntryAddress(
+                    memory=memory,
+                    entry_id=hit.entry_id,
+                    entry_version_id=hit.entry_version_id,
+                )
+                if scope_id is None:
+                    origin: PreparedContextOrigin = MemoryCitation(
+                        memory_ref=hit.memory_ref,
+                        entry_id=hit.entry_id,
+                        entry_version_id=hit.entry_version_id,
+                    )
+                else:
+                    origin = address
+                citation = {
+                    "scope_id": group.scope_id,
+                    "memory_ref": hit.memory_ref.model_dump(mode="json"),
+                    "entry_id": hit.entry_id,
+                    "entry_version_id": hit.entry_version_id,
+                }
+                entries.append((address, origin, citation, hit.text, None))
+        sentences = {
+            index: _sentence_token_spans(text)
+            for index, (_address, _origin, _citation, text, _extra) in enumerate(entries)
+        }
+        max_run_bytes = max(256, request.max_bytes // 3)
+        candidates: list[_FragmentCandidate] = []
+        for index, (address, origin, citation, text, _extra) in enumerate(entries):
+            for start, end, score in _evidence_spans(text, sentences[index], query_terms, max_run_bytes):
+                candidates.append(
+                    _FragmentCandidate(
+                        score=score,
+                        address=address,
+                        origin=origin,
+                        citation=citation,
+                        start=start,
+                        end=end,
+                        text=text[start:end],
+                    )
+                )
+        candidates.sort(key=lambda candidate: -candidate.score)
+        selected: list[_FragmentCandidate] = []
+        for candidate in candidates:
+            if _rendered_fragment_bytes((*selected, candidate)) <= request.max_bytes:
+                selected.append(candidate)
+        if not selected:
+            return None, (), ()
+        selected.sort(key=lambda candidate: (candidate.address.memory.artifact.artifact_id, candidate.start))
+        return (
+            _render_fragments(selected),
+            tuple(candidate.origin for candidate in selected),
+            tuple(
+                PreparedContextFragment(
+                    address=candidate.address,
+                    start=candidate.start,
+                    end=candidate.end,
+                    text=candidate.text,
+                )
+                for candidate in selected
+            ),
+        )
 
     def _profile_entries(self, candidates: Sequence[PreparedProfileCandidate]) -> tuple[_PreparedContextEntry, ...]:
         entries = []
@@ -692,6 +818,201 @@ def _render(entries: Sequence[_PreparedContextEntry]) -> str:
     }
     encoded = json.dumps(envelope, ensure_ascii=False, separators=(",", ":"))
     return "\n\n".join((TRUST_POLICY, f"{_BEGIN_MARKER}\n{encoded}\n{_END_MARKER}"))
+
+
+_EVIDENCE_TOKEN = re.compile(r"[a-z]+|\d+|[\u3400-\u9fff]")
+_EVIDENCE_STOP_TOKENS = frozenset([
+    "a",
+    "an",
+    "the",
+    "and",
+    "or",
+    "of",
+    "to",
+    "in",
+    "on",
+    "at",
+    "by",
+    "for",
+    "from",
+    "with",
+    "as",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "what",
+    "which",
+    "who",
+    "how",
+    "why",
+    "when",
+    "where",
+    "did",
+    "do",
+    "does",
+    "can",
+    "could",
+    "should",
+    "would",
+    "it",
+    "its",
+    "their",
+    "there",
+    "that",
+    "this",
+    "these",
+    "those",
+    "we",
+    "our",
+    "you",
+    "your",
+    "has",
+    "have",
+    "had",
+    "not",
+    "no",
+    "than",
+    "then",
+    "into",
+    "about",
+    "over",
+    "under",
+    "during",
+    "also",
+    "more",
+    "most",
+    "some",
+    "other",
+    "such",
+    "each",
+    "both",
+    "all",
+    "only",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "will",
+    "if",
+    "because",
+    "while",
+    "use",
+    "used",
+    "using",
+    "based",
+    "results",
+    "result",
+    "study",
+    "studies",
+    "paper",
+])
+_EVIDENCE_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])\s+|\n+")
+
+
+def _evidence_stem(token: str, /) -> str:
+    if len(token) < 4 or token.isdigit() or token.startswith("u_"):
+        return token
+    if token.endswith("ies"):
+        return f"{token[:-3]}y"
+    if token.endswith("s") and not token.endswith("ss") and not token.endswith("us"):
+        return token[:-1]
+    return token
+
+
+def _evidence_query_terms(query: str, /) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            _evidence_stem(token)
+            for token in _EVIDENCE_TOKEN.findall(query.lower())
+            if token not in _EVIDENCE_STOP_TOKENS
+        )
+    )
+
+
+def _evidence_matches(token: str, terms: tuple[str, ...], /) -> bool:
+    for term in terms:
+        if token == term:
+            return True
+        common = 0
+        for left, right in zip(token, term, strict=False):
+            if left != right:
+                break
+            common += 1
+        if common >= 5 and min(len(token), len(term)) >= 6:
+            return True
+    return False
+
+
+def _sentence_token_spans(text: str, /) -> tuple[tuple[int, int, tuple[str, ...]], ...]:
+    """Split one entry text into sentence spans with their content tokens."""
+
+    boundaries = [0]
+    boundaries.extend(match.end() for match in _EVIDENCE_SENTENCE_BOUNDARY.finditer(text))
+    if boundaries[-1] < len(text):
+        boundaries.append(len(text))
+    spans: list[tuple[int, int, tuple[str, ...]]] = []
+    for start, end in pairwise(boundaries):
+        piece = text[start:end]
+        if not piece.strip():
+            continue
+        tokens = tuple(_evidence_stem(token) for token in _EVIDENCE_TOKEN.findall(piece.lower()))
+        spans.append((start, end, tokens))
+    return tuple(spans)
+
+
+def _score_evidence_span(tokens: tuple[str, ...], query_terms: tuple[str, ...], /) -> float:
+    matched = {token for token in tokens if _evidence_matches(token, query_terms)}
+    return float(len(matched))
+
+
+def _evidence_spans(
+    text: str,
+    sentence_spans: tuple[tuple[int, int, tuple[str, ...]], ...],
+    query_terms: tuple[str, ...],
+    max_run_bytes: int,
+    /,
+) -> tuple[tuple[int, int, float], ...]:
+    """Pick the query-matched sentences of one entry and merge adjacent picks."""
+
+    scored = [(start, end, _score_evidence_span(tokens, query_terms)) for start, end, tokens in sentence_spans]
+    scored = [item for item in scored if item[2] > 0.0]
+    if not scored:
+        return ()
+    picked = sorted(scored, key=lambda item: (-item[2], item[0]))[:4]
+    picked.sort(key=lambda item: item[0])
+    merged: list[tuple[int, int, float]] = []
+    for start, end, score in picked:
+        if merged and start - merged[-1][1] <= 1:
+            run_bytes = len(text[merged[-1][0] : end].encode("utf-8"))
+            if run_bytes <= max_run_bytes:
+                merged[-1] = (merged[-1][0], end, merged[-1][2] + score)
+                continue
+        merged.append((start, end, score))
+    return tuple((start, end, score) for start, end, score in merged)
+
+
+def _render_fragments(selected: Sequence[_FragmentCandidate], /) -> str:
+    envelope = {
+        "trust": "untrusted_history",
+        "items": [
+            {
+                "citation": candidate.citation,
+                "content": candidate.text,
+                "start": candidate.start,
+                "end": candidate.end,
+            }
+            for candidate in selected
+        ],
+    }
+    encoded = json.dumps(envelope, ensure_ascii=False, separators=(",", ":"))
+    return "\n\n".join((TRUST_POLICY, f"{_BEGIN_MARKER}\n{encoded}\n{_END_MARKER}"))
+
+
+def _rendered_fragment_bytes(selected: Sequence[_FragmentCandidate], /) -> int:
+    return len(_render_fragments(selected).encode("utf-8"))
 
 
 def _text_item(entry: _PreparedContextEntry) -> ContextTextItem:
