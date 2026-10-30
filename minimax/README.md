@@ -17,7 +17,7 @@ minimax/
 ├── README.md               ← 本文件(一页技术说明)
 ├── pyproject.toml          ← sddctx 模块及依赖
 ├── src/sddctx/             ← 上下文模块源码
-│   ├── cli.py              ← 调用入口(import/context/dev/verify/status/resume/diff/reset)
+│   ├── cli.py              ← 调用入口(import/context/dev/verify/status/resume/diff/reset/doctor)
 │   ├── seekdb_store.py     ← 嵌入式 seekdb 存储:工程资料表 + 原生全文索引
 │   ├── importer.py         ← 资料导入(内容变化自动升版本)
 │   ├── context_builder.py  ← 检索选择与上下文组装(规格条目/代码/测试/任务状态)
@@ -75,7 +75,10 @@ cd minimax
 uv venv .venv --python 3.12 && uv pip install -e ".[dev]"   # 依赖安装
 .venv/bin/sddctx import                                     # 数据初始化(导入工程资料)
 .venv/bin/powercontext server run --env-file powercontext.env   # 启动状态服务
+.venv/bin/sddctx doctor                                     # 体检:各组件就绪检查
 .venv/bin/sddctx context --task "为订单查询增加最小金额筛选条件"               # 构建上下文
 ```
+
+配置示例见 `env.example`(占位值,勿提交真实凭据)。
 
 完整流程与验收步骤见 [docs/RUNBOOK.md](docs/RUNBOOK.md) 与 [docs/VALIDATION.md](docs/VALIDATION.md)。

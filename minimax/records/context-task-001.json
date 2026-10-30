@@ -1,6 +1,6 @@
 {
   "task": "为订单查询增加最小金额筛选条件:customer_orders 支持 min_total 参数,含边界,不影响既有调用",
-  "generated_at": "2026-10-30T16:10:40+00:00",
+  "generated_at": "2026-10-30T17:32:19+00:00",
   "sections": {
     "spec_entries": [
       {
@@ -80,6 +80,30 @@
           "标识符命中 min_total"
         ],
         "content": "未提供 min_total 时,返回该客户全部订单,行为与既有版本完全一致。"
+      },
+      {
+        "kind": "spec_entry",
+        "source": "specs/SPEC-002-折扣规则.md#SPEC-002-3",
+        "title": "SPEC-002-3",
+        "symbol": "SPEC-002-3",
+        "version": 1,
+        "score": 2.6339,
+        "reasons": [
+          "全文检索 score=2.634"
+        ],
+        "content": "折扣不改变订单原始总额,只影响应付金额的计算结果。"
+      },
+      {
+        "kind": "spec_entry",
+        "source": "specs/SPEC-002-折扣规则.md#SPEC-002-1",
+        "title": "SPEC-002-1",
+        "symbol": "SPEC-002-1",
+        "version": 1,
+        "score": 1.5837,
+        "reasons": [
+          "全文检索 score=1.584"
+        ],
+        "content": "折扣百分比必须在 [0, 50] 区间内(含边界),超出范围抛出 ValueError。"
       }
     ],
     "spec_files": [
@@ -191,20 +215,6 @@
     "tests": [
       {
         "kind": "test",
-        "source": "sample-project/tests/test_order_query_filter.py",
-        "title": null,
-        "symbol": "test_min_total_returns_only_matching_orders, test_min_total_includes_boundary, test_min_total_none_returns_all, test_filter_preserves_creation_order, test_min_total_above_everything_returns_empty, test_unknown_customer_with_min_total_returns_empty, test_min_total_must_not_mutate_results_for_other_calls",
-        "version": 1,
-        "score": 5.439,
-        "reasons": [
-          "全文检索 score=3.439",
-          "标识符命中 customer_orders",
-          "标识符命中 min_total"
-        ],
-        "content": "\"\"\"SPEC-003 目标功能测试:订单查询的最小金额筛选(min_total)。\n\n这一组测试在目标行为实现前必须失败(过滤未实现),实现后必须全部通过;\n同时是修改后回归测试的一部分。\n\"\"\"\n\nfrom decimal import Decimal\n\nfrom checkout.service import OrderService\n\n\ndef test_min_total_returns_only_matching_orders(service):\n    orders = service.customer_orders(\"c-001\", min_total=Decimal(\"50.00\"))\n    assert [o.order_id for o in orders] == [\"A-1002\", \"A-1004\"]\n\n\ndef test_min_total_includes_boundary(service):\n    # A-1001 总额恰好 20.00:含边界时必须返回,且总额 99.90/200.00 的订单必须被过滤掉。\n    orders = service.customer_orders(\"c-001\", min_total=Decimal(\"20.00\"))\n    assert [o.order_id for o in orders] == [\"A-1001\"]\n\n\ndef test_min_total_none_returns_all(service):\n    orders = service.customer_orders(\"c-001\", min_total=None)\n    assert [o.order_id for o in orders] == [\"A-1001\", \"A-1002\", \"A-1004\"]\n\n\ndef test_filter_preserves_creation_order(service):\n    orders = service.customer_orders(\"c-001\", min_total=Decimal(\"10.00\"))\n    created = [o.created_at for o in orders]\n    assert created == sorted(created)\n\n\ndef test_min_total_above_everything_returns_empty(service):\n    assert service.customer_orders(\"c-001\", min_total=Decimal(\"999.00\")) == []\n\n\ndef test_unknown_customer_with_min_total_returns_empty(service):\n    assert service.customer_orders(\"nobody\", min_total=Decimal(\"1.00\")) == []\n\n\ndef test_min_total_must_not_mutate_results_for_other_calls(service):\n    service.customer_orders(\"c-001\", min_total=Decimal(\"100.00\"))\n    # 过滤不得影响后续不带筛选的查询。\n    assert [o.order_id for o in service.customer_orders(\"c-001\")] == [\"A-1001\", \"A-1002\", \"A-1004\"]\n"
-      },
-      {
-        "kind": "test",
         "source": "sample-project/tests/test_service_orders.py",
         "title": null,
         "symbol": "test_customer_orders_returns_all_without_filter, test_customer_orders_accepts_min_total_keyword, test_customer_orders_unknown_customer",
@@ -216,6 +226,20 @@
           "标识符命中 min_total"
         ],
         "content": "\"\"\"订单服务 customer_orders 接口的既有行为回归测试(不带筛选参数)。\"\"\"\n\nfrom decimal import Decimal\n\nfrom checkout.service import OrderService\n\n\ndef test_customer_orders_returns_all_without_filter(service):\n    orders = service.customer_orders(\"c-001\")\n    assert [o.order_id for o in orders] == [\"A-1001\", \"A-1002\", \"A-1004\"]\n\n\ndef test_customer_orders_accepts_min_total_keyword(service):\n    # 参数已存在于接口签名(SPEC-003 的 API 形态),调用不应报错。\n    orders = service.customer_orders(\"c-001\", min_total=Decimal(\"0\"))\n    assert len(orders) == 3\n\n\ndef test_customer_orders_unknown_customer(service):\n    assert service.customer_orders(\"nobody\") == []\n"
+      },
+      {
+        "kind": "test",
+        "source": "sample-project/tests/test_order_query_filter.py",
+        "title": null,
+        "symbol": "test_min_total_returns_only_matching_orders, test_min_total_includes_boundary, test_min_total_none_returns_all, test_filter_preserves_creation_order, test_min_total_above_everything_returns_empty, test_unknown_customer_with_min_total_returns_empty, test_min_total_must_not_mutate_results_for_other_calls",
+        "version": 1,
+        "score": 4.8116,
+        "reasons": [
+          "全文检索 score=2.812",
+          "标识符命中 customer_orders",
+          "标识符命中 min_total"
+        ],
+        "content": "\"\"\"SPEC-003 目标功能测试:订单查询的最小金额筛选(min_total)。\n\n这一组测试在目标行为实现前必须失败(过滤未实现),实现后必须全部通过;\n同时是修改后回归测试的一部分。\n\"\"\"\n\nfrom decimal import Decimal\n\nfrom checkout.service import OrderService\n\n\ndef test_min_total_returns_only_matching_orders(service):\n    orders = service.customer_orders(\"c-001\", min_total=Decimal(\"50.00\"))\n    assert [o.order_id for o in orders] == [\"A-1002\", \"A-1004\"]\n\n\ndef test_min_total_includes_boundary(service):\n    # A-1001 总额恰好 20.00:含边界(>=)语义下必须返回;高于阈值的订单保留;\n    # 其他客户的订单不得混入。该用例同时守护“不得误用严格大于”。\n    orders = service.customer_orders(\"c-001\", min_total=Decimal(\"20.00\"))\n    ids = [o.order_id for o in orders]\n    assert \"A-1001\" in ids\n    assert \"A-1002\" in ids and \"A-1004\" in ids\n    assert \"A-1003\" not in ids\n\n\ndef test_min_total_none_returns_all(service):\n    orders = service.customer_orders(\"c-001\", min_total=None)\n    assert [o.order_id for o in orders] == [\"A-1001\", \"A-1002\", \"A-1004\"]\n\n\ndef test_filter_preserves_creation_order(service):\n    orders = service.customer_orders(\"c-001\", min_total=Decimal(\"10.00\"))\n    created = [o.created_at for o in orders]\n    assert created == sorted(created)\n\n\ndef test_min_total_above_everything_returns_empty(service):\n    assert service.customer_orders(\"c-001\", min_total=Decimal(\"999.00\")) == []\n\n\ndef test_unknown_customer_with_min_total_returns_empty(service):\n    assert service.customer_orders(\"nobody\", min_total=Decimal(\"1.00\")) == []\n\n\ndef test_min_total_must_not_mutate_results_for_other_calls(service):\n    service.customer_orders(\"c-001\", min_total=Decimal(\"100.00\"))\n    # 过滤不得影响后续不带筛选的查询。\n    assert [o.order_id for o in service.customer_orders(\"c-001\")] == [\"A-1001\", \"A-1002\", \"A-1004\"]\n"
       },
       {
         "kind": "test",
@@ -249,7 +273,7 @@
   },
   "db_queries": [
     {
-      "executed_at": "2026-10-30T16:10:40+00:00",
+      "executed_at": "2026-10-30T17:32:19+00:00",
       "purpose": "context-selection:spec_entry",
       "sql": "\n    SELECT asset_id, kind, path, title, symbol, content, content_hash,\n           version, imported_at,\n           MATCH(searchable_text) AGAINST(:query) AS score\n    FROM sdd_assets\n    WHERE MATCH(searchable_text) AGAINST(:query)\n      AND kind IN :kinds\n    ORDER BY score DESC, asset_id\n    LIMIT :limit\n    ",
       "parameters": {
@@ -257,7 +281,7 @@
         "kinds": [
           "spec_entry"
         ],
-        "limit": 18
+        "limit": 24
       },
       "hit_count": 13,
       "hit_ids": [
@@ -274,10 +298,11 @@
         "spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-4#fdd07d606e8b30bc",
         "spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-2#04776bf9edbbfda4",
         "spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-3#6cb35b47310c4280"
-      ]
+      ],
+      "duration_ms": 3.27
     },
     {
-      "executed_at": "2026-10-30T16:10:40+00:00",
+      "executed_at": "2026-10-30T17:32:19+00:00",
       "purpose": "context-selection:spec_file",
       "sql": "\n    SELECT asset_id, kind, path, title, symbol, content, content_hash,\n           version, imported_at,\n           MATCH(searchable_text) AGAINST(:query) AS score\n    FROM sdd_assets\n    WHERE MATCH(searchable_text) AGAINST(:query)\n      AND kind IN :kinds\n    ORDER BY score DESC, asset_id\n    LIMIT :limit\n    ",
       "parameters": {
@@ -292,10 +317,11 @@
         "spec_file:specs/SPEC-003-订单查询规格.md",
         "spec_file:specs/SPEC-002-折扣规则.md",
         "spec_file:specs/SPEC-001-工程约束.md"
-      ]
+      ],
+      "duration_ms": 2.08
     },
     {
-      "executed_at": "2026-10-30T16:10:40+00:00",
+      "executed_at": "2026-10-30T17:32:19+00:00",
       "purpose": "context-selection:code",
       "sql": "\n    SELECT asset_id, kind, path, title, symbol, content, content_hash,\n           version, imported_at,\n           MATCH(searchable_text) AGAINST(:query) AS score\n    FROM sdd_assets\n    WHERE MATCH(searchable_text) AGAINST(:query)\n      AND kind IN :kinds\n    ORDER BY score DESC, asset_id\n    LIMIT :limit\n    ",
       "parameters": {
@@ -312,10 +338,11 @@
         "code:sample-project/src/checkout/repository.py#99141255e9035147",
         "code:sample-project/src/checkout/models.py#12900fee24408442",
         "code:sample-project/src/checkout/__init__.py"
-      ]
+      ],
+      "duration_ms": 2.39
     },
     {
-      "executed_at": "2026-10-30T16:10:40+00:00",
+      "executed_at": "2026-10-30T17:32:19+00:00",
       "purpose": "context-selection:test",
       "sql": "\n    SELECT asset_id, kind, path, title, symbol, content, content_hash,\n           version, imported_at,\n           MATCH(searchable_text) AGAINST(:query) AS score\n    FROM sdd_assets\n    WHERE MATCH(searchable_text) AGAINST(:query)\n      AND kind IN :kinds\n    ORDER BY score DESC, asset_id\n    LIMIT :limit\n    ",
       "parameters": {
@@ -327,11 +354,12 @@
       },
       "hit_count": 4,
       "hit_ids": [
-        "test:sample-project/tests/test_order_query_filter.py#f8b32bedfbacfb3a",
         "test:sample-project/tests/test_service_orders.py#0fa160457b454b76",
+        "test:sample-project/tests/test_order_query_filter.py#f8b32bedfbacfb3a",
         "test:sample-project/tests/test_repository.py#0ee34bf7554421ee",
         "test:sample-project/tests/conftest.py#ecd939968dbbb970"
-      ]
+      ],
+      "duration_ms": 1.08
     }
   ]
 }

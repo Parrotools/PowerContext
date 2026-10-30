@@ -17,6 +17,15 @@
 | 初始数据 | `tests/conftest.py` 夹具:客户 c-001 三笔订单(A-1001 总额 20.00、A-1002 99.90、A-1004 200.00),c-002 一笔(15.00) |
 | 无效干扰项(不应进入规格条目) | `specs/SPEC-002-折扣规则.md`(与查询任务无关) |
 
+## 0. 体检(可选但推荐)
+
+```bash
+.venv/bin/sddctx doctor
+```
+
+**预期**:seekdb、PowerContext Server、PowerContext scope、MiniMax 接入点/模型、业务工程测试五项为 ✔;
+MiniMax API Key 未配置时为 ▲(仅影响第 4 步);结论为"可以运行验证样例"。
+
 ## 前置条件
 
 按 [RUNBOOK.md](RUNBOOK.md) 完成:依赖安装、`sddctx import`、PowerContext Server 已启动。
@@ -37,8 +46,16 @@ MiniMax 相关步骤(第 5 步)需要 `SDDCTX_MINIMAX_API_KEY`;其余步骤无�
 .venv/bin/sddctx context --task "为订单查询增加最小金额筛选条件:customer_orders 支持 min_total 参数,含边界,不影响既有调用"
 ```
 
+随后用清单核对必要来源(便于评审核对):
+
+```bash
+.venv/bin/sddctx context --task "为订单查询增加最小金额筛选条件:customer_orders 支持 min_total 参数,含边界,不影响既有调用" --check examples/run-task-filter/task.json
+```
+
+**预期**:13 项必要来源(8 规格 + 2 代码 + 3 测试)逐项 ✔,结论"必要来源全部包含",退出码 0。
+
 **预期**(可逐项核对):
-- 第一节列出 SPEC-003 条目(1/2/3/5/6)与 SPEC-001-4,每条注明来源路径与版本;SPEC-002 折扣条目不出现;
+- 第一节列出 SPEC-003 条目与 SPEC-001 条目,每条注明来源路径与版本,相关规格文档附全文;SPEC-002 折扣条目不出现在条目中;
 - 第二节代码以 `sample-project/src/checkout/repository.py`、`service.py` 靠前,内容即当前带 `TODO(SPEC-003)` 的源码;
 - 第三节测试以 `test_order_query_filter.py` 靠前;
 - 第四节「任务状态(PowerContext)」显示已保存的看板(首次运行为“暂无”)。
@@ -54,7 +71,7 @@ MiniMax 相关步骤(第 5 步)需要 `SDDCTX_MINIMAX_API_KEY`;其余步骤无�
 
 **预期**:
 - before 判定为 `✔ 通过`(目标测试按预期失败),失败节点至少包含
-  `test_min_total_returns_only_matching_orders`、`test_min_total_includes_boundary`;
+  `test_min_total_returns_only_matching_orders`、`test_min_total_above_everything_returns_empty`;
   日志在 `records/verify/target-before-*.log`(记录命令、退出码 1、git 版本);
 - `status` 输出已写入 PowerContext 的看板 JSON(citation 含 entry_id/entry_version_id)。
 
@@ -80,7 +97,7 @@ export SDDCTX_MINIMAX_API_KEY="你的MiniMax API Key"
 
 **预期**:
 - 目标测试:`7 passed`(命令、退出码 0、git 版本记入 `records/verify/target-after-*.log`);
-- 回归测试:全量 `tests/` 全部通过(24 passed);
+- 回归测试:全量 `tests/` 20 个用例全部通过;
 - after 判定 `✔ 通过 — 目标测试与回归测试全部通过`;验证结果写入 PowerContext。
 
 ## 6. 规格更新后上下文使用新内容(上下文正确验收)

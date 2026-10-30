@@ -87,10 +87,14 @@ class BuiltContext:
             lines.append("- (无命中)")
         lines.append("")
         if self.spec_files:
-            lines.append("### 相关规格文档")
+            lines.append("### 相关规格文档(全文)")
             for item in self.spec_files:
-                lines.append(f"- `{item.path}` — {item.title}(版本 {item.version})")
-            lines.append("")
+                lines.append(f"#### `{item.path}` — {item.title}(版本 {item.version})")
+                lines.append("")
+                lines.append("```markdown")
+                lines.append(_clip(item.content, 2500))
+                lines.append("```")
+                lines.append("")
 
         lines.append("## 二、需要关注的代码")
         if self.code:
@@ -209,7 +213,7 @@ async def _build_async(settings: Settings, task: str, *, use_state: bool) -> Bui
     sink = QueryTraceSink(settings.db_query_log)
     identifiers = extract_identifiers(task)
     async with AssetStore(settings.seekdb_path, sink) as store:
-        spec_entries = await _select(store, task, kind="spec_entry", limit=6, identifiers=identifiers, purpose="context-selection:spec_entry")
+        spec_entries = await _select(store, task, kind="spec_entry", limit=8, identifiers=identifiers, purpose="context-selection:spec_entry")
         spec_files = await _select(store, task, kind="spec_file", limit=3, identifiers=identifiers, purpose="context-selection:spec_file")
         code = await _select(store, task, kind="code", limit=6, identifiers=identifiers, purpose="context-selection:code")
         tests = await _select(store, task, kind="test", limit=6, identifiers=identifiers, purpose="context-selection:test")

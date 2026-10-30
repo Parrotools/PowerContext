@@ -21,6 +21,7 @@ from sddctx.config import Settings
 
 BOARD_KIND = "task-board"
 VERIFICATION_KIND = "verification"
+DEV_RUN_KIND = "dev-run"
 _BOARD_QUERY_PREFIX = "sddctx task-board"
 
 
@@ -246,6 +247,52 @@ class TaskStateClient:
         except Exception as error:  # noqa: BLE001
             raise TaskStateError(f"读取验证结果失败:{error}") from error
 
+    def remember_dev_run(self, payload: dict) -> dict:
+        """把一次 MiniMax 开发过程(任务/模型/修改文件/产物目录)写入 PowerContext。"""
+        payload = {**payload, "executed_at": _now()}
+        text = json.dumps(
+            {"query_key": f"sddctx dev-run {payload.get('task_id', '')}", **payload},
+            ensure_ascii=False,
+        )
+        async def _run() -> dict:
+            async with self._client() as client:
+                return await self._remember_async(
+                    client, DEV_RUN_KIND, text, reason=f"MiniMax 开发记录:{payload.get('task_id', '')}"
+                )
+
+        try:
+            citation = asyncio.run(_run())
+        except TaskStateError:
+            raise
+        except Exception as error:  # noqa: BLE001
+            raise TaskStateError(f"保存开发记录失败:{error}") from error
+        self._log.write("dev-run.save", payload)
+        return citation
+
+    def load_dev_runs(self, task_id: str | None = None) -> list[dict]:
+        async def _run() -> list[dict]:
+            async with self._client() as client:
+                query = f"sddctx dev-run {task_id}" if task_id else "sddctx dev-run"
+                entries = await self._search_async(client, query, limit=10)
+                runs: list[dict] = []
+                for entry in entries:
+                    try:
+                        payload = json.loads(entry.get("text") or "")
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(payload, dict) and "query_key" in payload:
+                        payload.pop("query_key", None)
+                        runs.append(payload)
+                runs.sort(key=lambda item: item.get("executed_at", ""), reverse=True)
+                return runs
+
+        try:
+            return asyncio.run(_run())
+        except TaskStateError:
+            raise
+        except Exception as error:  # noqa: BLE001
+            raise TaskStateError(f"读取开发记录失败:{error}") from error
+
 
 def _entry_to_dict(hit: object) -> dict:
     """SearchMemoryResponse 命中项 → 平铺 dict(kind/text/citation)。"""
@@ -323,10 +370,15 @@ async def load_board(settings: Settings, task_id: str | None) -> TaskBoard | Non
     from powercontext.client import PowerContextClient  # noqa: PLC0415
 
     query = f"{_BOARD_QUERY_PREFIX} {task_id}" if task_id else _BOARD_QUERY_PREFIX
-    async with PowerContextClient(
-        settings.powercontext_url, token=settings.powercontext_token, timeout=30.0
-    ) as pc:
-        entries = await _search_entries(pc, settings, query)
+    try:
+        async with PowerContextClient(
+            settings.powercontext_url, token=settings.powercontext_token, timeout=30.0
+        ) as pc:
+            entries = await _search_entries(pc, settings, query)
+    except TaskStateError:
+        raise
+    except Exception as error:  # noqa: BLE001
+        raise TaskStateError(f"PowerContext 不可用({settings.powercontext_url}):{error}") from error
     boards = [parsed for entry in entries if (parsed := _parse_board_entry(entry)) is not None]
     if not boards:
         return None

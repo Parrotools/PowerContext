@@ -1,29 +1,84 @@
 # 开发上下文 — 为订单查询增加最小金额筛选条件:customer_orders 支持 min_total 参数,含边界,不影响既有调用
 
-- 生成时间: 2026-10-30T16:12:40+00:00
+- 生成时间: 2026-10-30T17:32:24+00:00
 
 ## 一、适用的规格条目
 - [SPEC-003-1] 订单查询接口 OrderService.customer_orders(customer_id, min_total=None) 支持可选的最小金额筛选参数 min_total(Decimal 类型)。
-  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-1`(版本 1,score 12.305)
+  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-1`(版本 1,score 12.101)
 - [SPEC-003-6] min_total 参数必须带默认值 None,保证既有调用 customer_orders(customer_id) 的兼容性。
-  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-6`(版本 1,score 6.655)
+  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-6`(版本 1,score 6.557)
 - [SPEC-001-4] 为既有接口增加参数时必须提供默认值,不能破坏既有调用的兼容性。
-  来源: `specs/SPEC-001-工程约束.md#SPEC-001-4`(版本 1,score 5.192)
+  来源: `specs/SPEC-001-工程约束.md#SPEC-001-4`(版本 1,score 5.026)
 - [SPEC-003-5] 过滤只作用于当次调用,不得影响同一仓储实例上后续不带筛选的查询结果。
-  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-5`(版本 1,score 3.669)
+  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-5`(版本 1,score 3.602)
 - [SPEC-003-2] 提供 min_total 时,只返回订单总额 >= min_total 的订单;过滤语义为大于等于(含边界),min_total 与某订单总额相等时该订单必须返回。
-  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-2`(版本 1,score 3.113)
+  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-2`(版本 1,score 3.072)
 - [SPEC-003-3] 未提供 min_total 时,返回该客户全部订单,行为与既有版本完全一致。
-  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-3`(版本 1,score 2.959)
+  来源: `specs/SPEC-003-订单查询规格.md#SPEC-003-3`(版本 1,score 2.949)
+- [SPEC-002-3] 折扣不改变订单原始总额,只影响应付金额的计算结果。
+  来源: `specs/SPEC-002-折扣规则.md#SPEC-002-3`(版本 1,score 2.634)
+- [SPEC-002-1] 折扣百分比必须在 [0, 50] 区间内(含边界),超出范围抛出 ValueError。
+  来源: `specs/SPEC-002-折扣规则.md#SPEC-002-1`(版本 1,score 1.584)
 
-### 相关规格文档
-- `specs/SPEC-003-订单查询规格.md` — SPEC-003 订单查询规格(版本 3)
-- `specs/SPEC-002-折扣规则.md` — SPEC-002 折扣规则规格(版本 1)
-- `specs/SPEC-001-工程约束.md` — SPEC-001 工程约束规格(版本 1)
+### 相关规格文档(全文)
+#### `specs/SPEC-003-订单查询规格.md` — SPEC-003 订单查询规格(版本 1)
+
+```markdown
+# SPEC-003 订单查询规格
+
+- 编号: SPEC-003
+- 状态: 有效
+- 适用模块: checkout.service.OrderService / checkout.repository.OrderRepository
+
+## 条目
+
+- SPEC-003-1: 订单查询接口 OrderService.customer_orders(customer_id, min_total=None) 支持可选的最小金额筛选参数 min_total(Decimal 类型)。
+- SPEC-003-2: 提供 min_total 时,只返回订单总额 >= min_total 的订单;过滤语义为大于等于(含边界),min_total 与某订单总额相等时该订单必须返回。
+- SPEC-003-3: 未提供 min_total 时,返回该客户全部订单,行为与既有版本完全一致。
+- SPEC-003-4: 过滤不得改变结果排序:结果仍按创建时间升序排列,同一创建时间按 order_id 升序。
+- SPEC-003-5: 过滤只作用于当次调用,不得影响同一仓储实例上后续不带筛选的查询结果。
+- SPEC-003-6: min_total 参数必须带默认值 None,保证既有调用 customer_orders(customer_id) 的兼容性。
+
+```
+
+#### `specs/SPEC-002-折扣规则.md` — SPEC-002 折扣规则规格(版本 1)
+
+```markdown
+# SPEC-002 折扣规则规格
+
+- 编号: SPEC-002
+- 状态: 有效
+- 适用模块: checkout.pricing
+
+## 条目
+
+- SPEC-002-1: 折扣百分比必须在 [0, 50] 区间内(含边界),超出范围抛出 ValueError。
+- SPEC-002-2: 折扣在订单总额(未加税)的基础上计算,结果保留两位小数。
+- SPEC-002-3: 折扣不改变订单原始总额,只影响应付金额的计算结果。
+
+```
+
+#### `specs/SPEC-001-工程约束.md` — SPEC-001 工程约束规格(版本 1)
+
+```markdown
+# SPEC-001 工程约束规格
+
+- 编号: SPEC-001
+- 状态: 有效
+- 适用模块: checkout 全部模块
+
+## 条目
+
+- SPEC-001-1: 所有金额字段与计算结果一律使用 Decimal,并且必须保留两位小数;禁止使用 float 表示金额。
+- SPEC-001-2: 订单时间字段 created_at 使用 UTC 时间;存储与比较时不携带时区信息。
+- SPEC-001-3: 查询类接口的结果默认按创建时间升序排列;同一创建时间按 order_id 升序。
+- SPEC-001-4: 为既有接口增加参数时必须提供默认值,不能破坏既有调用的兼容性。
+
+```
 
 ## 二、需要关注的代码
 ### `sample-project/src/checkout/service.py` — 符号: OrderService
-来源: `sample-project/src/checkout/service.py`(版本 1,score 3.549)
+来源: `sample-project/src/checkout/service.py`(版本 1,score 3.512)
 
 ```python
 """订单服务:下单与订单查询的业务入口。"""
@@ -77,7 +132,7 @@ class OrderService:
 ```
 
 ### `sample-project/src/checkout/repository.py` — 符号: OrderRepository
-来源: `sample-project/src/checkout/repository.py`(版本 1,score 3.038)
+来源: `sample-project/src/checkout/repository.py`(版本 1,score 3.014)
 
 ```python
 """订单仓储。内存实现,提供订单查询接口(订单查询/查询接口/customer_orders 的底层实现)。"""
@@ -123,7 +178,7 @@ class OrderRepository:
 ```
 
 ### `sample-project/src/checkout/pricing.py` — 符号: apply_discount
-来源: `sample-project/src/checkout/pricing.py`(版本 1,score 1.232)
+来源: `sample-project/src/checkout/pricing.py`(版本 1,score 1.167)
 
 ```python
 """折扣计算(SPEC-002 折扣规则)。"""
@@ -152,7 +207,7 @@ def apply_discount(total: Decimal, percent: Decimal) -> Decimal:
 ```
 
 ### `sample-project/src/checkout/models.py` — 符号: OrderItem, Order
-来源: `sample-project/src/checkout/models.py`(版本 1,score 0.762)
+来源: `sample-project/src/checkout/models.py`(版本 1,score 0.742)
 
 ```python
 """订单与订单项的数据模型。"""
@@ -208,8 +263,35 @@ __all__ = ["Order", "OrderItem", "OrderRepository", "OrderService", "apply_disco
 ```
 
 ## 三、验证测试
+### `sample-project/tests/test_service_orders.py` — 符号: test_customer_orders_returns_all_without_filter, test_customer_orders_accepts_min_total_keyword, test_customer_orders_unknown_customer
+来源: `sample-project/tests/test_service_orders.py`(版本 1,score 5.304)
+
+```python
+"""订单服务 customer_orders 接口的既有行为回归测试(不带筛选参数)。"""
+
+from decimal import Decimal
+
+from checkout.service import OrderService
+
+
+def test_customer_orders_returns_all_without_filter(service):
+    orders = service.customer_orders("c-001")
+    assert [o.order_id for o in orders] == ["A-1001", "A-1002", "A-1004"]
+
+
+def test_customer_orders_accepts_min_total_keyword(service):
+    # 参数已存在于接口签名(SPEC-003 的 API 形态),调用不应报错。
+    orders = service.customer_orders("c-001", min_total=Decimal("0"))
+    assert len(orders) == 3
+
+
+def test_customer_orders_unknown_customer(service):
+    assert service.customer_orders("nobody") == []
+
+```
+
 ### `sample-project/tests/test_order_query_filter.py` — 符号: test_min_total_returns_only_matching_orders, test_min_total_includes_boundary, test_min_total_none_returns_all, test_filter_preserves_creation_order, test_min_total_above_everything_returns_empty, test_unknown_customer_with_min_total_returns_empty, test_min_total_must_not_mutate_results_for_other_calls
-来源: `sample-project/tests/test_order_query_filter.py`(版本 1,score 5.535)
+来源: `sample-project/tests/test_order_query_filter.py`(版本 1,score 4.812)
 
 ```python
 """SPEC-003 目标功能测试:订单查询的最小金额筛选(min_total)。
@@ -229,9 +311,13 @@ def test_min_total_returns_only_matching_orders(service):
 
 
 def test_min_total_includes_boundary(service):
-    # A-1001 总额恰好 20.00:含边界时必须返回,且总额 99.90/200.00 的订单必须被过滤掉。
+    # A-1001 总额恰好 20.00:含边界(>=)语义下必须返回;高于阈值的订单保留;
+    # 其他客户的订单不得混入。该用例同时守护“不得误用严格大于”。
     orders = service.customer_orders("c-001", min_total=Decimal("20.00"))
-    assert [o.order_id for o in orders] == ["A-1001"]
+    ids = [o.order_id for o in orders]
+    assert "A-1001" in ids
+    assert "A-1002" in ids and "A-1004" in ids
+    assert "A-1003" not in ids
 
 
 def test_min_total_none_returns_all(service):
@@ -260,35 +346,8 @@ def test_min_total_must_not_mutate_results_for_other_calls(service):
 
 ```
 
-### `sample-project/tests/test_service_orders.py` — 符号: test_customer_orders_returns_all_without_filter, test_customer_orders_accepts_min_total_keyword, test_customer_orders_unknown_customer
-来源: `sample-project/tests/test_service_orders.py`(版本 1,score 5.408)
-
-```python
-"""订单服务 customer_orders 接口的既有行为回归测试(不带筛选参数)。"""
-
-from decimal import Decimal
-
-from checkout.service import OrderService
-
-
-def test_customer_orders_returns_all_without_filter(service):
-    orders = service.customer_orders("c-001")
-    assert [o.order_id for o in orders] == ["A-1001", "A-1002", "A-1004"]
-
-
-def test_customer_orders_accepts_min_total_keyword(service):
-    # 参数已存在于接口签名(SPEC-003 的 API 形态),调用不应报错。
-    orders = service.customer_orders("c-001", min_total=Decimal("0"))
-    assert len(orders) == 3
-
-
-def test_customer_orders_unknown_customer(service):
-    assert service.customer_orders("nobody") == []
-
-```
-
 ### `sample-project/tests/test_repository.py` — 符号: test_add_and_get_roundtrip, test_for_customer_only_returns_that_customer, test_for_customer_sorted_by_created_at_then_id, test_unknown_customer_returns_empty, test_totals_are_two_decimal
-来源: `sample-project/tests/test_repository.py`(版本 1,score 2.341)
+来源: `sample-project/tests/test_repository.py`(版本 1,score 2.311)
 
 ```python
 """订单仓储的既有行为回归测试(不含 SPEC-003 的 min_total 过滤)。"""
@@ -382,9 +441,9 @@ def service() -> OrderService:
 ```
 
 ## 四、任务状态(PowerContext)
-- 任务编号: pytest-task
-- 目标: 测试看板写入与读取
-- 已完成: ["写入看板"]
-- 待办: ["读取看板"]
+- 任务编号: task-001
+- 目标: 为订单查询增加最小金额筛选条件:customer_orders 支持 min_total 参数,含边界,不影响既有调用
+- 已完成: ["导入规格/代码/测试资料到 seekdb", "构建开发上下文并确认规格条目", "修改前运行目标测试并记录失败"]
+- 待办: ["MiniMax 完成代码修改", "修改后运行目标测试与回归测试"]
 - 已有验证结果: []
-- 最近更新: 2026-10-30T16:11:33+00:00
+- 最近更新: 2026-10-30T17:32:22+00:00

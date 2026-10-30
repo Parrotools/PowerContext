@@ -30,7 +30,7 @@
 | `SDDCTX_SEEKDB_PATH` | `minimax/.sddctx-data/seekdb` | 否 | 嵌入式 seekdb 数据目录 |
 | `SDDCTX_HOME` | 自动定位 minimax/ | 否 | 规格/业务工程/记录的根目录 |
 
-凭据一律走环境变量,仓库内无真实密钥;`.sddctx-data/`(seekdb 数据、PowerContext 数据、
+全部配置项的占位示例见 `env.example`;凭据一律走环境变量,仓库内无真实密钥;`.sddctx-data/`(seekdb 数据、PowerContext 数据、
 服务日志)已被 `.gitignore` 排除,属可重置的运行时状态。
 
 ## 3. 数据初始化
@@ -68,6 +68,8 @@ mkdir -p .sddctx-data
 | `sddctx resume --task-id t1` | 无 | 从 PowerContext 读取看板+验证结果,并重建开发上下文 |
 | `sddctx diff --run-dir <目录>` | dev 运行目录 | 修改前后统一差异(`code.diff.md`) |
 | `sddctx reset [--force]` | 无 | 清空 seekdb 数据目录与生成记录(规格/代码恢复用 git) |
+| `sddctx doctor` | 无 | 体检:seekdb/资产/PowerContext/MiniMax/业务工程测试逐项就绪检查 |
+| `sddctx context --task … --check examples/run-task-filter/task.json` | 任务清单 | 对照清单核对必要规格/代码/测试来源,全部命中输出 ✔ 且退出码 0 |
 
 ## 6. 测试命令
 

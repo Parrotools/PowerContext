@@ -15,9 +15,13 @@ def test_min_total_returns_only_matching_orders(service):
 
 
 def test_min_total_includes_boundary(service):
-    # A-1001 总额恰好 20.00:含边界时必须返回,且总额 99.90/200.00 的订单必须被过滤掉。
+    # A-1001 总额恰好 20.00:含边界(>=)语义下必须返回;高于阈值的订单保留;
+    # 其他客户的订单不得混入。该用例同时守护“不得误用严格大于”。
     orders = service.customer_orders("c-001", min_total=Decimal("20.00"))
-    assert [o.order_id for o in orders] == ["A-1001"]
+    ids = [o.order_id for o in orders]
+    assert "A-1001" in ids
+    assert "A-1002" in ids and "A-1004" in ids
+    assert "A-1003" not in ids
 
 
 def test_min_total_none_returns_all(service):

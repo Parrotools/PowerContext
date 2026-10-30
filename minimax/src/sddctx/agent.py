@@ -209,6 +209,31 @@ def run_dev(settings: Settings, task: str, task_id: str, run_dir: Path | None = 
     ]
     (run_dir / "devlog.md").write_text("\n".join(devlog), encoding="utf-8")
 
+    # 把开发过程写入 PowerContext(状态链:任务→上下文→修改→验证)
+    try:
+        from sddctx.task_state import TaskStateClient  # noqa: PLC0415
+
+        TaskStateClient(settings).remember_dev_run(
+            {
+                "task_id": task_id,
+                "task": task,
+                "model": result.model,
+                "base_url": settings.minimax_base_url,
+                "run_dir": str(run_dir),
+                "context_file": str(run_dir / "context.md"),
+                "devlog_file": str(run_dir / "devlog.md"),
+                "usage": result.usage,
+                "applied_files": [
+                    {"path": item.path, "sha256": item.sha256, "existed_before": item.existed_before}
+                    for item in applied
+                ],
+            }
+        )
+    except Exception as error:  # noqa: BLE001 - PowerContext 不可达不阻塞修改
+        print(f"[warn] 开发记录写入 PowerContext 失败: {error}")
+
+    write_diff(run_dir, settings)  # 生成 code.diff.md,产物与入口无关、始终完整
+
     return DevRunResult(run_dir=run_dir, applied=applied, model=result.model, usage=result.usage)
 
 

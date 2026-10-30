@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -137,6 +138,7 @@ class QueryTrace(BaseModel):
     parameters: dict[str, Any] = Field(default_factory=dict)
     hit_count: int = 0
     hit_ids: list[str] = Field(default_factory=list)
+    duration_ms: float = 0.0
 
 
 class QueryTraceSink:
@@ -160,7 +162,7 @@ class QueryTraceSink:
             handle.write(_squash(trace.sql))
             handle.write("\n```\n\n")
             handle.write(f"- 参数: `{trace.parameters}`\n")
-            handle.write(f"- 命中数: {trace.hit_count};命中: `{trace.hit_ids}`\n\n")
+            handle.write(f"- 命中数: {trace.hit_count};命中: `{trace.hit_ids}`;耗时: {trace.duration_ms} ms\n\n")
 
 
 def _squash(sql: str, limit: int = 400) -> str:
@@ -361,8 +363,10 @@ class AssetStore:
             return []
         parameters = {"query": analyzed, "kinds": tuple(kinds), "limit": limit}
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        started = time.monotonic()
         async with self._connection() as connection:
             rows = (await connection.execute(_SEARCH_SQL, parameters)).mappings().all()
+        duration_ms = (time.monotonic() - started) * 1000
         self._trace_sink.record(
             QueryTrace(
                 executed_at=now,
@@ -371,6 +375,7 @@ class AssetStore:
                 parameters={"query(analyzed)": analyzed, "kinds": list(kinds), "limit": limit},
                 hit_count=len(rows),
                 hit_ids=[row["asset_id"] for row in rows],
+                duration_ms=round(duration_ms, 2),
             )
         )
         return [

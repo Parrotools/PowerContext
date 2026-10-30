@@ -24,7 +24,9 @@ $SDDCTX import
 step "2/7 构建开发上下文"
 $SDDCTX context --task "$TASK" --out records/context-task-001.md
 $SDDCTX context --task "$TASK" --json > records/context-task-001.json
+$SDDCTX context --task "$TASK" --check examples/run-task-filter/task.json > records/context-task-001.check.md
 sed -n '1,40p' records/context-task-001.md
+grep -E "✔|✘|结论" records/context-task-001.check.md | tail -3
 
 step "3/7 修改前验证(目标行为未实现,预期失败)"
 $SDDCTX verify --task-id "$TASK_ID" --phase before || true

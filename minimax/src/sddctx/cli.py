@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 from sddctx import __version__
-from sddctx.config import Settings
+from sddctx.config import Settings, redact
 from sddctx.context_builder import build_context
 from sddctx.importer import run_import
 from sddctx.runner import run_verify
@@ -42,6 +42,38 @@ def cmd_import(args: argparse.Namespace) -> int:
     return 0
 
 
+def _check_required_sources(context, task_def: dict) -> tuple[bool, list[str]]:
+    """对照 task.json 的必要来源清单核对上下文输出,返回(是否全部命中, 报告行)。"""
+    entries = {item.path for item in context.spec_entries}
+    files = {item.path for item in context.spec_files}
+    code_paths = {item.path for item in context.code}
+    test_paths = {item.path for item in context.tests}
+    lines: list[str] = []
+    all_ok = True
+
+    def _covered(required: str, direct: set[str], fallback: set[str]) -> tuple[bool, str]:
+        if required in direct:
+            return True, "条目命中"
+        parent = required.split("#")[0]
+        if "#" in required and parent in fallback:
+            return True, "所在规格文档已纳入上下文"
+        return False, "未命中"
+
+    for required in task_def.get("required_spec_sources", []):
+        ok, how = _covered(required, entries, files)
+        all_ok &= ok
+        lines.append(f"  {'✔' if ok else '✘'} 规格 {required}({how})")
+    for required in task_def.get("required_code_sources", []):
+        ok = required in code_paths
+        all_ok &= ok
+        lines.append(f"  {'✔' if ok else '✘'} 代码 {required}")
+    for required in task_def.get("required_test_sources", []):
+        ok = required in test_paths
+        all_ok &= ok
+        lines.append(f"  {'✔' if ok else '✘'} 测试 {required}")
+    return all_ok, lines
+
+
 def cmd_context(args: argparse.Namespace) -> int:
     settings = _settings()
     context = build_context(settings, args.task, use_state=not args.no_state)
@@ -50,6 +82,17 @@ def cmd_context(args: argparse.Namespace) -> int:
         out_path = Path(args.out)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(output_text, encoding="utf-8")
+    if args.check:
+        task_def = json.loads(Path(args.check).read_text(encoding="utf-8"))
+        all_ok, lines = _check_required_sources(context, task_def)
+        report = ["# 上下文必要来源核对", f"- 任务: {args.task}", f"- 清单: {args.check}", ""] + lines
+        report.append(f"\n结论:{'必要来源全部包含 ✔' if all_ok else '存在缺失 ✘'}")
+        report_text = "\n".join(report)
+        print(report_text)
+        if args.out:
+            check_path = Path(str(args.out)).with_suffix(".check.md")
+            check_path.write_text(report_text, encoding="utf-8")
+        return 0 if all_ok else 1
     if args.json:
         print(json.dumps(context.to_json(include_content=True), ensure_ascii=False, indent=2))
     else:
@@ -61,7 +104,7 @@ def cmd_context(args: argparse.Namespace) -> int:
 
 def cmd_dev(args: argparse.Namespace) -> int:
     settings = _settings()
-    from sddctx.agent import MiniMaxError, run_dev, write_diff  # noqa: PLC0415
+    from sddctx.agent import MiniMaxError, run_dev  # noqa: PLC0415
 
     try:
         result = run_dev(settings, args.task, args.task_id, Path(args.run_dir) if args.run_dir else None)
@@ -69,8 +112,7 @@ def cmd_dev(args: argparse.Namespace) -> int:
         print(f"[dev 失败] {error}", file=sys.stderr)
         return 2
     print(result.summary)
-    diff_path = write_diff(result.run_dir, settings)
-    print(f"代码差异已生成: {diff_path}")
+    print(f"代码差异已生成: {result.run_dir / 'code.diff.md'}")
     print(f"下一步: 运行 `sddctx verify --task-id {args.task_id} --phase after` 验证修改。")
     return 0
 
@@ -124,6 +166,7 @@ def cmd_resume(args: argparse.Namespace) -> int:
     try:
         board = state.load_board(args.task_id)
         verifications = state.load_verifications(args.task_id)
+        dev_runs = state.load_dev_runs(args.task_id)
     except TaskStateError as error:
         print(f"[resume 失败] {error}", file=sys.stderr)
         return 2
@@ -142,6 +185,11 @@ def cmd_resume(args: argparse.Namespace) -> int:
     print("- 已有验证结果(来自 PowerContext Memory):")
     for record in verifications:
         print(f"  [{record.phase}] {'通过' if record.passed else '未通过'} — {record.detail or record.command}(日志: {record.log_path})")
+    if dev_runs:
+        print("- MiniMax 开发记录(来自 PowerContext Memory):")
+        for run in dev_runs:
+            files = ", ".join(item.get("path", "?") for item in run.get("applied_files", [])) or "(无)"
+            print(f"  [{run.get('executed_at', '?')}] 模型 {run.get('model', '?')} 修改 {files}(日志: {run.get('devlog_file', '?')})")
     # 复用:把恢复的状态用于构建当前上下文
     context = build_context(settings, board.objective, use_state=True)
     context_path = settings.records_dir / "resume-context.md"
@@ -183,6 +231,87 @@ def cmd_reset(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_doctor(args: argparse.Namespace) -> int:
+    """体检:依次检查 seekdb、库内资产、PowerContext、MiniMax 配置与业务工程测试收集。"""
+    settings = _settings()
+    results: list[tuple[str, str, str]] = []  # (状态, 项目, 说明)
+
+    # 1. seekdb 可用性
+    try:
+        from sddctx.seekdb_store import AssetStore  # noqa: PLC0415
+        import asyncio  # noqa: PLC0415
+
+        async def _probe() -> int:
+            async with AssetStore(settings.seekdb_path) as store:
+                return await store.count()
+
+        count = asyncio.run(_probe())
+        results.append(("ok" if count else "warn", "seekdb", f"可用;库内资产 {count} 条" + ("" if count else "(尚未导入,先运行 sddctx import)")))
+    except Exception as error:  # noqa: BLE001
+        results.append(("fail", "seekdb", f"不可用:{error}"))
+
+    # 2. PowerContext Server
+    try:
+        import httpx  # noqa: PLC0415
+
+        response = httpx.get(settings.powercontext_url.rstrip("/") + "/health/ready", timeout=5)
+        ok = response.status_code == 200
+        results.append(("ok" if ok else "fail", "PowerContext Server", f"{settings.powercontext_url} → HTTP {response.status_code}"))
+    except Exception as error:  # noqa: BLE001
+        results.append(("warn", "PowerContext Server", f"不可达({settings.powercontext_url}):{error};状态保存/复用将不可用"))
+        results.append(("skip", "PowerContext scope", "依赖 Server"))
+    else:
+        try:
+            state = TaskStateClient(settings)
+            scope_id = state.ensure_scope()
+            results.append(("ok", "PowerContext scope", f"就绪(scope_id={scope_id})"))
+        except TaskStateError as error:
+            results.append(("fail", "PowerContext scope", str(error)))
+
+    # 3. MiniMax 配置
+    if settings.minimax_api_key:
+        results.append(("ok", "MiniMax API Key", f"已配置({redact(settings.minimax_api_key)})"))
+    else:
+        results.append(("warn", "MiniMax API Key", "未配置;仅影响 sddctx dev 步骤"))
+    results.append(("ok", "MiniMax 接入点/模型", f"{settings.minimax_base_url} / {settings.minimax_model}"))
+
+    # 4. 业务工程测试可收集
+    try:
+        import subprocess  # noqa: PLC0415
+        import sys as _sys  # noqa: PLC0415
+
+        probe = subprocess.run(
+            [_sys.executable, "-m", "pytest", "tests", "--collect-only", "-q"],
+            cwd=settings.sample_project_dir,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+            env={**dict(__import__("os").environ), "PYTHONPATH": str(settings.sample_project_dir / "src")},
+        )
+        # -q 聚合输出形如 "tests/test_pricing.py: 5";逐行累加数量,兜底数 "::" 行
+        collected = 0
+        for line in probe.stdout.splitlines():
+            line = line.strip()
+            if "::" in line:
+                collected += 1
+            elif line and ":" in line and line.rsplit(":", 1)[1].strip().isdigit():
+                collected += int(line.rsplit(":", 1)[1].strip())
+        results.append(("ok" if probe.returncode == 0 else "fail", "业务工程测试", f"可收集 {collected} 个用例(exit={probe.returncode})"))
+    except Exception as error:  # noqa: BLE001
+        results.append(("fail", "业务工程测试", str(error)))
+
+    symbols = {"ok": "✔", "warn": "▲", "fail": "✘", "skip": "—"}
+    failed = 0
+    print("# sddctx 体检")
+    for status, item, detail in results:
+        print(f"{symbols[status]} {item}: {detail}")
+        if status == "fail":
+            failed += 1
+    print(f"\n结论:{'存在 ' + str(failed) + ' 项失败,请先修复' if failed else '可以运行验证样例(warn 项按说明处理)'}")
+    return 1 if failed else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sddctx", description="SDD 上下文管理系统(见 minimax/README.md)")
     parser.add_argument("--version", action="version", version=f"sddctx {__version__}")
@@ -195,6 +324,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--task", required=True, help="开发任务的自然语言描述")
     p.add_argument("--out", help="同时写入 markdown 文件")
     p.add_argument("--json", action="store_true", help="以 JSON 输出(含检索审计)")
+    p.add_argument("--check", metavar="TASK_JSON", help="对照任务清单 JSON 核对必要规格/代码/测试来源(便于评审核对)")
     p.add_argument("--no-state", action="store_true", help="不读取 PowerContext 任务状态")
     p.set_defaults(func=cmd_context)
 
@@ -230,6 +360,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("reset", help="清空 seekdb 数据与生成记录")
     p.add_argument("--force", action="store_true")
     p.set_defaults(func=cmd_reset)
+
+    p = sub.add_parser("doctor", help="体检:seekdb/PowerContext/MiniMax/业务工程就绪检查")
+    p.set_defaults(func=cmd_doctor)
     return parser
 
 
