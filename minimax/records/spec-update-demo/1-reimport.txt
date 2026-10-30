@@ -1,0 +1,5 @@
+sys:1: SAWarning: Dialect mysql:aiomysql will not make use of SQL compilation caching as it does not set the 'supports_statement_cache' attribute to ``True``.  This can have significant performance implications including some performance degradations in comparison to prior SQLAlchemy versions.  Dialect maintainers should seek to set this attribute to True after appropriate development and testing for SQLAlchemy 1.4 caching support.   Alternatively, this attribute may be set to False which will disable this warning. (Background on this warning at: https://sqlalche.me/e/21/cprf)
+导入完成:扫描 13 个文件,写入 27 条资产。
+  分类: code×5, spec_entry×14, spec_file×3, test×5
+  库内资产总数: 27
+  导入/查询审计已追加到: /Users/zigeqiao/workspace/powercontext/minimax/records/db-query-log.md
