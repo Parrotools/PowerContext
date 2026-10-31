@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, BookOpen, MessageCircle, Repeat } from 'lucide-react'
+import { House, LayoutDashboard, BookOpen, MessageCircle, Repeat } from 'lucide-react'
 
 const links = [
+  { to: '/', icon: House, label: '项目主页', end: true },
   { to: '/dashboard', icon: LayoutDashboard, label: '学习总览' },
   { to: '/knowledge', icon: BookOpen, label: '知识库' },
   { to: '/chat', icon: MessageCircle, label: '智能问答' },
@@ -17,10 +18,11 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
-        {links.map(({ to, icon: Icon, label }) => (
+        {links.map(({ to, icon: Icon, label, end }) => (
           <NavLink
             key={to}
             to={to}
+            end={end}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive

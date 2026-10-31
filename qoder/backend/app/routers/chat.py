@@ -46,6 +46,7 @@ async def chat(req: ChatRequest):
             user_msg=req.message,
             assistant_msg=answer,
             topic=_extract_topic(search_results),
+            user_id=req.user_id,
         )
     except Exception as e:
         logger.warning(f"Failed to save chat interaction: {e}")

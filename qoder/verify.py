@@ -6,17 +6,23 @@
     python verify.py
 """
 
+import argparse
 import json
+import os
+import shutil
+import subprocess
 import sys
 import time
 import urllib.request
 import urllib.error
+from pathlib import Path
 
 BASE = "http://localhost:8000"
 PC_BASE = "http://localhost:8010"
 PASS = "PASS"
 FAIL = "FAIL"
 results = []
+skipped = []
 
 
 def api(method, path, body=None, base=None):
@@ -44,7 +50,52 @@ def check(name, condition, detail=""):
     return condition
 
 
+def skip(name, detail=""):
+    skipped.append(name)
+    print(f"  [SKIP] {name}")
+    if detail:
+        print(f"         {detail}")
+
+
+def wait_for_health(timeout=90):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        status, _ = api("GET", "/api/health")
+        if status == 200:
+            return True
+        time.sleep(2)
+    return False
+
+
+def restart_backend(command):
+    """Run the restart command from the qoder/ directory and wait for health."""
+    print(f"  [....] Restarting backend: {command}")
+    try:
+        proc = subprocess.run(
+            command,
+            shell=True,
+            cwd=Path(__file__).resolve().parent,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+    except subprocess.TimeoutExpired:
+        return False, "restart command timed out"
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip().replace("\n", " ")[:300]
+        return False, f"exit {proc.returncode}: {detail}"
+    return True, "restart command completed"
+
+
 def main():
+    parser = argparse.ArgumentParser(description="ZhiXu verification script")
+    parser.add_argument(
+        "--restart-cmd",
+        default=os.environ.get("ZHIXU_RESTART_CMD", ""),
+        help="command that restarts the backend; defaults to 'docker compose restart backend' when Docker is available",
+    )
+    args = parser.parse_args()
+
     print("=" * 60)
     print("  ZhiXu Verification Script")
     print("=" * 60)
@@ -108,10 +159,12 @@ def main():
     check("Recommendations generated", recs > 0, f"generated {recs} recommendations")
     print()
 
-    # 5. Chat - search + memory fusion
+    # 5. Chat - search + memory fusion + restart persistence
     print("[5/6] Chat - SeekDB Retrieval + PowerContext Memory")
+    nonce = f"verify-{int(time.time())}"
+    question = f"{nonce}: What are the traversal methods for binary trees?"
     status, chat = api("POST", "/api/chat/message", {
-        "message": "What are the traversal methods for binary trees?",
+        "message": question,
         "user_id": "verify-test",
     })
     check("Chat API", status == 200)
@@ -119,6 +172,39 @@ def main():
     if chat.get("sources"):
         src = chat["sources"][0]
         check("Source has relevance score", src.get("score", 0) > 0, f"score: {src.get('score', 0)}")
+
+    # Ask the same question again: the first interaction must be recalled from PowerContext.
+    status, chat2 = api("POST", "/api/chat/message", {
+        "message": question,
+        "user_id": "verify-test",
+    })
+    memory = chat2.get("memory_context") or ""
+    check("Memory written and recalled", status == 200 and nonce in memory, f"recalled {len(memory)} bytes of prepared context")
+    check("Recalled memory matches question", "traversal" in memory.lower(), f"marker {nonce} found in memory context")
+
+    # Restart the backend process, then ask again. Memory must still be recalled.
+    restart_cmd = args.restart_cmd
+    if not restart_cmd and shutil.which("docker"):
+        restart_cmd = "docker compose restart backend"
+    if restart_cmd:
+        restarted, detail = restart_backend(restart_cmd)
+        check("Backend restarted", restarted, detail)
+        check("Backend healthy after restart", wait_for_health(), "GET /api/health -> 200")
+        status, chat3 = api("POST", "/api/chat/message", {
+            "message": question,
+            "user_id": "verify-test",
+        })
+        memory_after = chat3.get("memory_context") or ""
+        check(
+            "Memory survived restart",
+            status == 200 and nonce in memory_after,
+            f"recalled {len(memory_after)} bytes after restart",
+        )
+    else:
+        skip(
+            "Memory survived restart",
+            "no restart command found; pass --restart-cmd or set ZHIXU_RESTART_CMD, or install Docker",
+        )
     print()
 
     # 6. PowerContext direct verification
@@ -138,7 +224,7 @@ def main():
     passed = sum(1 for _, ok in results if ok)
     total = len(results)
     failed = total - passed
-    print(f"  Results: {passed}/{total} passed, {failed} failed")
+    print(f"  Results: {passed}/{total} passed, {failed} failed, {len(skipped)} skipped")
     if failed == 0:
         print("  ALL CHECKS PASSED")
     else:
@@ -146,6 +232,10 @@ def main():
         for name, ok in results:
             if not ok:
                 print(f"    - {name}")
+    if skipped:
+        print("  SKIPPED CHECKS:")
+        for name in skipped:
+            print(f"    - {name}")
     print("=" * 60)
 
     return 0 if failed == 0 else 1

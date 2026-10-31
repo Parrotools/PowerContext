@@ -58,9 +58,15 @@ async def generic_error_handler(request: Request, exc: Exception):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    # FastAPI matches allow_origins literally; the published site lives on a
+    # generated *.qoder.zone subdomain, so allow the Qoder Sites domains by regex.
+    allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)*qoder\.(zone|site)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Chrome sends a Private Network Access preflight when the public Qoder
+    # Sites page calls a localhost backend. Starlette rejects it by default.
+    allow_private_network=True,
 )
 
 app.include_router(knowledge.router)

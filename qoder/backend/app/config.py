@@ -43,7 +43,6 @@ def _parse_cors() -> list[str]:
     return [
         "http://localhost:5173",
         "http://localhost:3000",
-        "https://*.qoder.site",
     ]
 
 

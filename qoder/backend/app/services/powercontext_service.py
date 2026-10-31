@@ -15,7 +15,27 @@ logger = logging.getLogger(__name__)
 
 _scope_id: str | None = None
 _scope_init_failed = False
-_SCOPE_CACHE = Path(tempfile.gettempdir()) / "zhixu_pc_scope_id"
+_SCOPE_IDEMPOTENCY_KEY = "zhixu-learning-scope-v1"
+_SCOPE_TITLE = "知序学习助手"
+_SCOPE_SUMMARY = "知序学习助手的默认记忆作用域，用于追踪用户学习状态和知识掌握情况"
+
+
+def _scope_cache_path() -> Path:
+    """Keep the scope pointer on the backend data volume, not in container /tmp."""
+    preferred = Path(settings.SEEKDB_DATABASE_PATH) / "zhixu_pc_scope_id"
+    try:
+        preferred.parent.mkdir(parents=True, exist_ok=True)
+        return preferred
+    except OSError:
+        return Path(tempfile.gettempdir()) / "zhixu_pc_scope_id"
+
+
+async def _scope_exists(client: httpx.AsyncClient, scope_id: str) -> bool:
+    try:
+        resp = await client.get(f"{settings.POWERCONTEXT_URL}/v1/scopes/{scope_id}")
+        return resp.status_code < 300
+    except httpx.HTTPError:
+        return False
 
 
 async def _ensure_scope() -> str:
@@ -33,23 +53,25 @@ async def _ensure_scope() -> str:
         _scope_id = configured
         return _scope_id
 
-    if _SCOPE_CACHE.exists():
-        try:
-            _scope_id = _SCOPE_CACHE.read_text().strip()
-            if _scope_id:
-                return _scope_id
-        except Exception:
-            pass
-
+    cache = _scope_cache_path()
     try:
         async with httpx.AsyncClient(timeout=5) as client:
+            if cache.exists():
+                try:
+                    cached = cache.read_text().strip()
+                except OSError:
+                    cached = ""
+                if cached and await _scope_exists(client, cached):
+                    _scope_id = cached
+                    return _scope_id
+
             resp = await client.post(
                 f"{settings.POWERCONTEXT_URL}/v1/scopes",
                 headers={"Content-Type": "application/json"},
                 json={
-                    "idempotency_key": str(uuid.uuid4()),
-                    "title": "知序学习助手",
-                    "summary": "知序学习助手的默认记忆作用域，用于追踪用户学习状态和知识掌握情况",
+                    "idempotency_key": _SCOPE_IDEMPOTENCY_KEY,
+                    "title": _SCOPE_TITLE,
+                    "summary": _SCOPE_SUMMARY,
                 },
             )
             if resp.status_code < 300:
@@ -57,10 +79,10 @@ async def _ensure_scope() -> str:
                 _scope_id = data.get("scope_id") or data.get("id")
                 if _scope_id:
                     try:
-                        _SCOPE_CACHE.write_text(_scope_id)
+                        cache.write_text(_scope_id)
                     except OSError:
                         pass
-                    logger.info(f"PowerContext scope auto-created: {_scope_id}")
+                    logger.info(f"PowerContext scope ready: {_scope_id}")
                     return _scope_id
     except Exception as e:
         logger.warning(f"PowerContext scope auto-creation failed: {e}")
@@ -91,23 +113,40 @@ async def _request(method: str, path: str, **kwargs) -> dict | None:
 # ── Source capture ─────────────────────────────────────────────
 
 async def capture_learning_note(content: str, note_type: str = "study_session") -> dict | None:
-    """Capture a learning interaction as a Source in PowerContext."""
+    """Capture a learning interaction as a ContentSource in PowerContext."""
     scope_id = await _ensure_scope()
     return await _request("POST", "/v1/sources/content", json={
         "scope_id": scope_id,
-        "type": "content",
-        "content_type": note_type,
-        "body": {"text": content},
-        "metadata": {"timestamp": datetime.utcnow().isoformat()},
+        "source_id": f"{note_type}-{uuid.uuid4().hex}",
+        "content": content,
+        "metadata": {
+            "timestamp": datetime.utcnow().isoformat(),
+            "note_type": note_type,
+        },
     })
 
 
-async def capture_chat_interaction(user_msg: str, assistant_msg: str, topic: str = "") -> dict | None:
-    """Record a Q&A interaction for memory extraction."""
-    content = f"User asked: {user_msg}\nAssistant answered: {assistant_msg}"
+async def capture_chat_interaction(
+    user_msg: str,
+    assistant_msg: str,
+    topic: str = "",
+    user_id: str = "default",
+) -> dict | None:
+    """Archive the interaction as a Source and keep a recallable Atomic Memory.
+
+    Topic Memory processing needs an LLM worker, so without it Sources are never
+    distilled into searchable memory. Writing an Atomic Memory directly keeps the
+    write -> recall loop working in demo deployments too.
+    """
+    content = f"User {user_id} asked: {user_msg}\nAssistant answered: {assistant_msg}"
     if topic:
         content = f"Topic: {topic}\n{content}"
-    return await capture_learning_note(content, note_type="chat_interaction")
+    await capture_learning_note(content, note_type="chat_interaction")
+    return await save_memory(
+        key=f"user:{user_id}:chat:{uuid.uuid4().hex}",
+        content=content,
+        memory_type="chat_interaction",
+    )
 
 
 # ── Atomic Memory ──────────────────────────────────────────────
@@ -327,12 +366,11 @@ def _calc_next_review(mastery: str, review_count: int) -> datetime | None:
 async def prepare_context(user_id: str, query: str = "") -> dict | None:
     """Get a bounded recall context for the user."""
     scope_id = await _ensure_scope()
+    normalized_query = query.strip() or f"learning progress user {user_id}"
     return await _request("POST", "/v1/context/prepare", json={
         "scope_id": scope_id,
-        "subject_id": user_id,
-        "query": query,
-        "sections": ["memory", "experience", "profile"],
-        "byte_budget": 4096,
+        "query": normalized_query,
+        "max_bytes": 4096,
     })
 
 

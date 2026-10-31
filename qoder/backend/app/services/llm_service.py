@@ -37,7 +37,7 @@ async def chat_completion(
 def build_chat_prompt(
     user_message: str,
     retrieved_context: list[dict],
-    memory_context: dict | None = None,
+    memory_context: str | None = None,
     learning_state: list[dict] | None = None,
 ) -> list[dict]:
     """Build the prompt messages for the chat endpoint, fusing SeekDB retrieval + PowerContext memory."""

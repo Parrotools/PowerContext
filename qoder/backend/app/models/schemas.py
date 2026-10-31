@@ -58,7 +58,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     sources: list[SearchResult]
-    memory_context: dict | None = None
+    memory_context: str | None = None
     session_id: str
 
 

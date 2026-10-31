@@ -5,24 +5,26 @@ import { api } from '../api/client'
 
 const STAT_CARDS = [
   { key: 'docs', icon: BookOpen, label: '知识库文档', color: 'text-blue-600 bg-blue-50', to: '/knowledge' },
-  { key: 'chats', icon: MessageCircle, label: '今日问答', color: 'text-green-600 bg-green-50', to: '/chat' },
+  { key: 'chats', icon: MessageCircle, label: '近期问答', color: 'text-green-600 bg-green-50', to: '/chat' },
   { key: 'review', icon: Repeat, label: '待复习', color: 'text-orange-600 bg-orange-50', to: '/review' },
   { key: 'mastered', icon: TrendingUp, label: '已掌握', color: 'text-purple-600 bg-purple-50', to: '/review' },
 ]
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ docs: 0, review: 0, mastered: 0 })
+  const [stats, setStats] = useState({ docs: 0, chats: 0, review: 0, mastered: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     (async () => {
       try {
-        const [docs, review] = await Promise.all([
+        const [docs, history, review] = await Promise.all([
           api.listDocuments().catch(() => []),
+          api.getHistory('default').catch(() => ({ history: [] })),
           api.getReviewStatus('default').catch(() => null),
         ])
         setStats({
           docs: docs.length,
+          chats: history?.history?.length ?? 0,
           review: review?.recommendations?.length ?? 0,
           mastered: review?.topics?.filter(t => t.mastery === 'mastered').length ?? 0,
         })

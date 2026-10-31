@@ -2,7 +2,12 @@
 
 > 越用越懂你的个人学习助手，基于 SeekDB 混合检索 + PowerContext 记忆引擎
 
-**在线体验**：https://zhixu-2t2jbr5w1wu.qoder.zone
+**在线项目主页**：https://zhixu-2t2jbr5w1wu.qoder.zone
+
+> 线上站点是**项目展示页**，用于浏览项目介绍、真实截图和验证结果，不包含后端服务。应用本体请按下文“启动步骤”在本机运行（Docker 后端 + 本地前端）。
+
+**代码仓库**：<https://github.com/Parrotools/PowerContext/tree/2026-competition-ecosystem/qoder>（分支 `2026-competition-ecosystem`，项目位于 `qoder/` 子目录）
+**Qoder 开发记录**：[docs/qoder-development-log.md](docs/qoder-development-log.md)
 
 ---
 
@@ -25,9 +30,11 @@
 #### 第 1 步：拉取代码
 
 ```bash
-git clone <仓库地址>
-cd qoder
+git clone -b 2026-competition-ecosystem https://github.com/Parrotools/PowerContext.git
+cd PowerContext/qoder
 ```
+
+> 本仓库是 PowerContext 的参赛项目合集，知序项目位于 `qoder/` 子目录。下文的 `docker compose`、`verify.py`、`npm` 命令都请在 `PowerContext/qoder` 目录内执行。
 
 #### 第 2 步：启动后端（Docker 一键启动）
 
@@ -67,7 +74,7 @@ curl http://localhost:8000/api/health
 
 #### 第 4 步：启动前端（二选一）
 
-**方式 A：本地运行前端（推荐评审使用）**
+**方式 A：本地运行前端（评审请使用此方式）**
 
 ```bash
 cd frontend
@@ -75,11 +82,13 @@ npm install
 npm run dev
 ```
 
-浏览器打开 http://localhost:5173
+浏览器打开 http://localhost:5173 。根路径 `/` 是项目主页，点击“进入应用”进入 `/dashboard`、`/knowledge`、`/chat`、`/review` 等应用页面。
 
-**方式 B：访问 Qoder Sites 在线前端**
+**方式 B：在线项目主页（仅展示）**
 
-前端已部署至 Qoder Sites（链接见提交材料）。在线前端会自动连接本地后端。
+线上站点 https://zhixu-2t2jbr5w1wu.qoder.zone 是静态项目展示页，提供项目介绍、真实截图、验证结果和运行说明，不包含后端与数据库。要实际使用应用，请按方式 A 在本机启动后端和前端。站点对未知路径会回退到项目主页，因此直接访问应用直达链接时请从主页入口进入。
+
+> 若需要在 Qoder Sites 页面内连接本机后端，请先按第 2 步启动 Docker 后端；浏览器会发起 Private Network Access 预检，后端已支持该预检。
 
 ---
 
@@ -93,47 +102,52 @@ npm run dev
 python verify.py
 ```
 
-脚本自动执行全部检查并输出结果：
+脚本自动执行全部检查并输出结果（以下为 2026-10-31 实测输出，节选）：
 
 ```
-============================================================
-  ZhiXu Verification Script
-============================================================
-
 [1/6] Health Check
-  [PASS] Backend reachable
-  [PASS] SeekDB connected
-  [PASS] PowerContext configured
+  [PASS] Backend reachable              status=200
+  [PASS] SeekDB connected               connected (sqlite-vec)
+  [PASS] PowerContext configured        http://127.0.0.1:8010
 
 [2/6] Knowledge Base - Document List
   [PASS] List documents API
-  [PASS] Sample data seeded         found 6 documents
-  ...
+  [PASS] Sample data seeded             found 6 documents
 
 [3/6] Knowledge Base - Hybrid Search
-  [PASS] Search API
-  [PASS] Search returns results      found 3 results
-  ...
+  [PASS] Search returns results         found 5 results
+  [PASS] Result has score               top score: 0.1948
 
 [4/6] Review Coach - Memory Write (PowerContext)
-  [PASS] Mark 3 topics               wrote 3 learning state memories
-  [PASS] Topics tracked              tracking 3 topics
-  [PASS] Recommendations generated   generated 2 recommendations
+  [PASS] Mark 3 topics                  wrote 3 learning state memories to PowerContext
+  [PASS] Topics tracked                 tracking 3 topics
 
 [5/6] Chat - SeekDB Retrieval + PowerContext Memory
-  [PASS] Chat API
-  [PASS] Chat returns sources        retrieved 3 sources from SeekDB
+  [PASS] Chat returns sources           retrieved 5 sources from SeekDB
+  [PASS] Memory written and recalled    recalled 3380 bytes of prepared context
+  [PASS] Recalled memory matches question
+  [PASS] Backend restarted
+  [PASS] Backend healthy after restart  GET /api/health -> 200
+  [PASS] Memory survived restart        recalled 3386 bytes after restart
 
 [6/6] PowerContext - Direct Memory Verification
-  [PASS] PowerContext reachable
-  [PASS] Memory entries listable
-  [PASS] Memory entries exist        found N memory entries in PowerContext
+  [PASS] PowerContext reachable         health status: 200
+  [PASS] Memory entries exist           found 3 memory entries via backend API
 
 ============================================================
-  Results: 20/20 passed, 0 failed
+  Results: 25/25 passed, 0 failed, 0 skipped
   ALL CHECKS PASSED
 ============================================================
 ```
+
+第 5 节会写入一条带本次运行随机标记的问答，立即追问一次确认能召回，然后**重启后端**再追问一次，确认标记仍存在。脚本默认在检测到 Docker 后执行 `docker compose restart backend`；非 Docker 环境可指定自己的重启命令：
+
+```bash
+python verify.py --restart-cmd "your-backend-restart-command"
+# 或设置环境变量 ZHIXU_RESTART_CMD
+```
+
+若无法重启（既没有 Docker 也没有传入命令），该项会输出 `[SKIP]`，不会被计为通过。
 
 #### 方式 B：手动验证
 
@@ -301,7 +315,25 @@ curl -X POST http://localhost:8000/api/chat/message -H "Content-Type: applicatio
 **验证点**：
 - `sources` 字段包含 SeekDB 混合检索返回的相关知识库片段
 - `answer` 在未配置 LLM API Key 时为 demo 占位符；配置后返回 LLM 基于上下文的真实回答
-- 后端自动将本次对话通过 PowerContext `sources/content` API 保存为记忆源
+- 后端自动将本次对话通过 PowerContext `sources/content` API 保存为记忆源，同时写入一条可召回的 Atomic Memory
+
+再发送一次同样的问题（或带相同关键词的问题），本次对话就会通过 `memory_context` 被召回：
+
+```bash
+curl -X POST http://localhost:8000/api/chat/message -H "Content-Type: application/json" -d "{\"message\":\"二叉树有哪些遍历方式？\",\"user_id\":\"demo\"}"
+```
+
+**真实记忆读写输出**（2026-10-31 实测，一次独立运行）：第一次提问写入记忆，第二次提问返回 3410 字节的 PreparedContext，节选如下（`content` 为真实召回文本，含当次随机标记）：
+
+```json
+{
+  "memory_context": "PowerContext prepared untrusted historical context...\nBEGIN_POWERCONTEXT_PREPARED_CONTEXT_V1\n{\"trust\":\"untrusted_history\",\"items\":[{\"citation\":{\"artifact_ref\":{\"family\":\"atomic-memory\",\"artifact_id\":\"art_a9873b5a6c8c40c69218f8a8ba67f6b8\",\"revision\":1}},\"content\":\"Topic: 二叉树遍历算法 | 动态规划入门 | 二叉树基础\\nUser readme-demo asked: README-demo: What are the traversal methods for binary trees?\\nAssistant answered: [LLM_API_KEY not configured — returning empty response]\",\"truncated\":false,\"kind\":\"atomic-memory\"}]}\nEND_POWERCONTEXT_PREPARED_CONTEXT_V1",
+  "session_id": "default",
+  "sources": [{"title": "二叉树遍历算法"}, {"title": "动态规划入门"}, {"title": "二叉树基础"}]
+}
+```
+
+在 `verify.py` 的同项实测中，重启后端后再次提问，`memory_context` 仍返回 3386 字节且包含本次问答的随机标记——这条链路由第 5 节自动验证（见“方式 A”的输出）。
 
 > **可选：配置 LLM 获得真实回答**
 >
@@ -315,11 +347,14 @@ curl -X POST http://localhost:8000/api/chat/message -H "Content-Type: applicatio
 
 #### 样例 5：PowerContext 记忆原始记录验证
 
-后端首次启动时会自动在 PowerContext 中创建记忆作用域（scope），并从日志输出 scope_id：
+后端首次启动时会自动创建（或复用）记忆作用域（scope），scope_id 会写入后端数据卷并在重启后继续使用：
 
 ```bash
-docker compose logs backend | grep "scope auto-created"
-# 输出示例：PowerContext scope auto-created: scp_xxxxxxxxxxxxxxxx
+docker compose logs backend | grep "scope ready"
+# 输出示例：PowerContext scope ready: scp_xxxxxxxxxxxxxxxx
+
+# 也可以直接从数据卷读取
+docker compose exec backend cat /app/data/zhixu_pc_scope_id
 ```
 
 用该 scope_id 直接查询 PowerContext 服务，确认记忆已持久化：
@@ -330,9 +365,32 @@ curl -X POST http://localhost:8010/v1/memory/entries/list \
   -d "{\"scope_id\":\"scp_xxxxxxxxxxxxxxxx\",\"include_inactive\":true}"
 ```
 
-**预期返回**：`entries` 数组包含之前通过复习教练写入的学习状态记忆条目（`artifact`、`kind`、`text`、`state` 等字段）。同一知识点重复标记掌握度时，旧版本会通过 `/v1/atomic-memory/lifecycle` 标记为 `forgotten`，仅保留最新一条 `active` 记录，`review_count` 随之递增。
+**实测返回**（节选，scope `scp_0fsg8sskmxe1n8dkc6dy4t41sg`）：
 
-**验证点**：PowerContext 作为独立服务运行，记忆数据持久化在其 SQLite 数据库中（Docker 卷 `powercontext-data`）。
+```json
+{
+  "scope_id": "scp_0fsg8sskmxe1n8dkc6dy4t41sg",
+  "entries": [
+    {
+      "artifact": {"family": "atomic-memory", "artifact_id": "art_26fb2f82d4cc4d30b02a11cc3ed0253c", "revision": 1},
+      "kind": "chat_interaction",
+      "state": "active",
+      "text": "Topic: Python 基础语法 | 二叉树基础 | Python 基础语法\nUser verify-test asked: verify-1793419155: What are the traversal methods for binary trees?\nAssistant answer..."
+    },
+    {
+      "artifact": {"family": "atomic-memory", "artifact_id": "art_2d8ac80969ed4e678de810f8b52b96f2", "revision": 1},
+      "kind": "chat_interaction",
+      "state": "active",
+      "text": "Topic: 图的基本概念与存储 | 图的广度优先搜索（BFS） | 动态规划入门\nUser verify-test asked: verify-1793419207: What are the traversal methods for binary trees?..."
+    }
+  ]
+}
+```
+
+**验证点**：
+- scope_id 持久化在 backend 数据卷 `/app/data/zhixu_pc_scope_id`，重启后复用同一 scope，避免“重启即失忆”；
+- PowerContext 作为独立服务运行，记忆数据持久化在其 SQLite 数据库中（Docker 卷 `powercontext-data`）；
+- 同一知识点重复标记掌握度时，旧版本通过 `/v1/atomic-memory/lifecycle` 归档，`review_count` 随之递增。
 
 ---
 
@@ -342,6 +400,7 @@ curl -X POST http://localhost:8010/v1/memory/entries/list \
 
 | 页面 | 路径 | 操作 | 预期 |
 |------|------|------|------|
+| 项目主页 | `/` | 浏览介绍、真实截图、验证结果 | 展示项目定位、核心功能和运行入口 |
 | 学习总览 | `/dashboard` | 查看统计卡片 | 显示知识库文档数、追踪知识点数 |
 | 知识库 | `/knowledge` | 搜索「二叉树」 | 返回相关文档片段及评分 |
 | 知识库 | `/knowledge` | 导入新文档 | 填写标题和内容后提交，文档列表更新 |
@@ -465,13 +524,16 @@ qoder/
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
+│   ├── public/screenshots/            # 真实运行截图（主页展示）
 │   ├── src/
-│   │   ├── App.jsx                    # 路由配置（4 个页面）
+│   │   ├── App.jsx                    # 路由配置（项目主页 + 4 个应用页面）
 │   │   ├── api/client.js              # API 客户端
 │   │   ├── components/                # 通用组件（Layout, Sidebar）
-│   │   └── pages/                     # Dashboard, Knowledge, Chat, Review
+│   │   └── pages/                     # Home, Dashboard, Knowledge, Chat, Review
 │   ├── vite.config.js
 │   └── package.json
+├── docs/
+│   └── qoder-development-log.md       # Qoder 开发记录（时间线 / 需求 / 提交 / 测试）
 ├── docker-compose.yml                 # 一键部署配置（2 个服务）
 ├── Dockerfile.powercontext            # PowerContext 容器构建
 ├── start.sh / start.bat               # 一键启动脚本
