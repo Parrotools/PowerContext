@@ -6,7 +6,7 @@
 - 仓库：<https://github.com/Parrotools/PowerContext>
 - 分支：`2026-competition-ecosystem`
 - 子目录：`qoder/`
-- 应用代码截止提交：`99b6ee19`
+- 应用代码截止提交：`001a8546`
 
 ## 一、时间线
 
@@ -77,6 +77,8 @@
 | `38d8ce97` | docs(qoder): add Qoder Sites URL to README |
 | `f9881aef` | fix(qoder): repair PowerContext memory round-trip |
 | `99b6ee19` | fix(qoder): close PowerContext memory loop and add project homepage（422 / scope 持久化 / CORS / 重启召回验证 + 项目主页 + 开发记录 + README） |
+| `aaa73fe9` | docs(qoder): record commit SHA in development log |
+| `001a8546` | docs(qoder): surface development log on the project homepage（主页内嵌时间线与最新验证输出） |
 
 ## 五、测试记录
 
