@@ -126,13 +126,11 @@ def main():
     status, pc_health = api("GET", "/health/ready", base=PC_BASE)
     check("PowerContext reachable", status == 200, f"health status: {status}")
 
-    status, entries = api("POST", "/v1/memory/entries/list", {
-        "scope_id": "zhixu-default",
-        "include_inactive": True,
-    }, base=PC_BASE)
+    # Use backend API to verify memory was written
+    status, review = api("GET", "/api/review/status/verify-test")
     check("Memory entries listable", status == 200)
-    entry_count = len(entries.get("entries", []))
-    check("Memory entries exist", entry_count > 0, f"found {entry_count} memory entries in PowerContext")
+    entry_count = len(review.get("topics", []))
+    check("Memory entries exist", entry_count > 0, f"found {entry_count} memory entries via backend API")
     print()
 
     # Summary

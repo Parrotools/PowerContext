@@ -315,13 +315,22 @@ curl -X POST http://localhost:8000/api/chat/message -H "Content-Type: applicatio
 
 #### 样例 5：PowerContext 记忆原始记录验证
 
-直接查询 PowerContext 服务，确认记忆已写入：
+后端首次启动时会自动在 PowerContext 中创建记忆作用域（scope），并从日志输出 scope_id：
 
 ```bash
-curl http://localhost:8010/v1/memory/entries/list -H "Authorization: Bearer zhixu-default"
+docker compose logs backend | grep "scope auto-created"
+# 输出示例：PowerContext scope auto-created: scp_xxxxxxxxxxxxxxxx
 ```
 
-**预期返回**：包含之前通过复习教练写入的学习状态记忆条目（artifact_id、kind、text 等字段）。
+用该 scope_id 直接查询 PowerContext 服务，确认记忆已持久化：
+
+```bash
+curl -X POST http://localhost:8010/v1/memory/entries/list \
+  -H "Content-Type: application/json" \
+  -d "{\"scope_id\":\"scp_xxxxxxxxxxxxxxxx\",\"include_inactive\":true}"
+```
+
+**预期返回**：`entries` 数组包含之前通过复习教练写入的学习状态记忆条目（`artifact`、`kind`、`text`、`state` 等字段）。同一知识点重复标记掌握度时，旧版本会通过 `/v1/atomic-memory/lifecycle` 标记为 `forgotten`，仅保留最新一条 `active` 记录，`review_count` 随之递增。
 
 **验证点**：PowerContext 作为独立服务运行，记忆数据持久化在其 SQLite 数据库中（Docker 卷 `powercontext-data`）。
 
@@ -425,9 +434,11 @@ PowerContext 以独立 Docker 容器运行（v1.4.1），提供以下能力：
 
 | API | 用途 | 调用场景 |
 |-----|------|---------|
+| `POST /v1/scopes` | 创建记忆作用域 | 首次启动自动创建 scope |
 | `POST /v1/memory/remember` | 写入记忆条目 | 标记知识点掌握状态 |
 | `POST /v1/memory/entries/list` | 列出全部记忆 | 获取用户学习状态 |
 | `POST /v1/memory/search` | 语义搜索记忆 | 查找相关学习历史 |
+| `POST /v1/atomic-memory/lifecycle` | 软删除/版本管理 | 知识点状态更新时归档旧版本 |
 | `POST /v1/sources/content` | 保存交互源内容 | 记录每次问答交互 |
 | `POST /v1/context/prepare` | 组装有界上下文 | 问答前召回用户画像 |
 
