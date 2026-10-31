@@ -280,7 +280,10 @@ class TaskStateClient:
                         payload = json.loads(entry.get("text") or "")
                     except json.JSONDecodeError:
                         continue
-                    if isinstance(payload, dict) and "query_key" in payload:
+                    if (
+                        isinstance(payload, dict)
+                        and str(payload.get("query_key", "")).startswith("sddctx dev-run")
+                    ):
                         payload.pop("query_key", None)
                         runs.append(payload)
                 runs.sort(key=lambda item: item.get("executed_at", ""), reverse=True)
@@ -313,7 +316,7 @@ def _parse_board_entry(entry: dict) -> TaskBoard | None:
         payload = json.loads(text)
     except json.JSONDecodeError:
         return None
-    if not isinstance(payload, dict) or "query_key" not in payload:
+    if not isinstance(payload, dict) or not str(payload.get("query_key", "")).startswith(_BOARD_QUERY_PREFIX):
         return None
     payload.pop("query_key", None)
     try:
@@ -327,6 +330,8 @@ def _parse_verification_entry(entry: dict) -> VerificationRecord | None:
     try:
         payload = json.loads(text)
     except json.JSONDecodeError:
+        return None
+    if not str(payload.get("query_key", "")).startswith("sddctx verification"):
         return None
     payload.pop("query_key", None)
     try:

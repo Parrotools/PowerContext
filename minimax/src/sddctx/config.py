@@ -8,7 +8,7 @@ from pathlib import Path
 
 DEFAULT_MINIMAX_BASE_URL_CN = "https://api.minimaxi.com/v1"
 DEFAULT_MINIMAX_BASE_URL_INTL = "https://api.minimax.io/v1"
-DEFAULT_MINIMAX_MODEL = "MiniMax-M2.1"
+DEFAULT_MINIMAX_MODEL = "MiniMax-M3.1-Flash"
 DEFAULT_POWERCONTEXT_URL = "http://127.0.0.1:8000"
 
 

@@ -23,7 +23,7 @@
 | --- | --- | --- | --- |
 | `SDDCTX_MINIMAX_API_KEY` | 无 | dev 步骤必填 | MiniMax API Key(也识别 `MINIMAX_API_KEY`) |
 | `SDDCTX_MINIMAX_BASE_URL` | `https://api.minimaxi.com/v1` | 否 | 国内平台;国际平台用 `https://api.minimax.io/v1` |
-| `SDDCTX_MINIMAX_MODEL` | `MiniMax-M2.1` | 否 | 如 `MiniMax-M2` / `MiniMax-M2.5` |
+| `SDDCTX_MINIMAX_MODEL` | `MiniMax-M3.1-Flash` | 否 | 平台旧型号会随下线退役,当前可用列表见 `GET /v1/models` |
 | `SDDCTX_MINIMAX_TEMPERATURE` | `1.0` | 否 | MiniMax M 系列推荐 1.0 |
 | `SDDCTX_POWERCONTEXT_URL` | `http://127.0.0.1:8000` | 否 | PowerContext Server 地址 |
 | `SDDCTX_POWERCONTEXT_TOKEN` | 无 | 否 | Server 开启鉴权时填 |
@@ -103,3 +103,5 @@ bash examples/run-task-filter/run-demo.sh
 5. `sddctx dev` 解析 MiniMax 输出的 `=== FILE: path ===` 围栏块;模型输出格式异常时
    不会写任何文件,可在 `minimax-response.md` 排查后重试。
 6. 上下文中代码文件内容超过 4000 字符时截断展示(完整内容始终以来源文件为准)。
+7. MiniMax 平台会定期下线旧型号(如 M2/M2.1/M2.5/M2.7 已于 2026-10 退役,调用返回 404/2069);
+   默认型号随之更新,提交前请用 `sddctx doctor` 或 `GET /v1/models` 确认当前可用。

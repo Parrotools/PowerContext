@@ -56,7 +56,7 @@ minimax/
 | --- | --- | --- | --- |
 | **seekdb**(嵌入式,pylibseekdb) | 存储工程资料(规格条目/代码/测试)与全文索引;每次上下文构建都在 seekdb 内完成 `MATCH … AGAINST` 检索与过滤,查询结果直接构成任务上下文 | `seekdb_store.py`、`importer.py`、`context_builder.py` | `records/db-query-log.md`(逐条 SQL、参数、命中) |
 | **PowerContext**(v1.2.0,官方 SDK + Server) | 保存任务进展(看板:已完成/待办)与验证结果(Memory 条目);模块重启后经 `search_memory` 读取,并用于重建开发上下文 | `task_state.py`、`cli.py resume/status` | `records/powercontext-log.md`(逐次写入/读取) |
-| **MiniMax**(OpenAI 兼容 API,默认 MiniMax-M2.1) | 接收完整开发上下文,生成目标文件的新内容,由模块解析并写入业务工程 | `minimax_client.py`、`agent.py` | `records/minimax/<run>/`(请求、响应、快照、差异、开发日志) |
+| **MiniMax**(OpenAI 兼容 API,默认 MiniMax-M3.1-Flash) | 接收完整开发上下文,生成目标文件的新内容,由模块解析并写入业务工程 | `minimax_client.py`、`agent.py` | `records/minimax/<run>/`(请求、响应、快照、差异、开发日志) |
 
 ## 上下文选择方式(可解释、确定性)
 

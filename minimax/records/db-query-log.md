@@ -443,3 +443,111 @@ UPDATE sdd_assets SET kind = :kind, path = :path, title = :title, symbol = :symb
 - 参数: `{'asset_id': 'spec_file:specs/SPEC-003-订单查询规格.md', 'kind': 'spec_file', 'path': 'specs/SPEC-003-订单查询规格.md', 'title': 'SPEC-003 订单查询规格', 'symbol': None, 'content': '<581 chars>', 'content_hash': 'b08174a52634716edec239b4ff353ca8048f23d0cf258c7e22f3f07733bad522', 'imported_at': '2026-10-30T17:32:40+00:00', 'searchable_text': 'spec 003 u_8ba2 u_5355 u_67e5 u_8be2 u_89c4 u_683c b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_89c4 b_89c4_683c specs md u_7f16 u_53f7 b_7f16_53f7 u_72b6 u_6001 b_72b6_6001 u_6709 u_6548 b_6709_6548 u_9002 u_7528 u_6a21 u_5757 b_9002_7528 b_7528_6a21 b_6a21_5757 checkout service orderservice repository orderrepository u_6761 u_76ee b_6761_76ee 1 u_63a5 u_53e3 b_8be2_63a5 b_63a5_53e3 customer_orders customer_id min_total none u_652f u_6301 u_53ef u_9009 u_7684 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_53c2 u_6570 b_652f_6301 b_6301_53ef b_53ef_9009 b_9009_7684 b_7684_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_53c2 b_53c2_6570 decimal u_7c7b u_578b b_7c7b_578b 2 u_63d0 u_4f9b b_63d0_4f9b u_65f6 u_53ea u_8fd4 u_56de u_603b b_53ea_8fd4 b_8fd4_56de b_56de_8ba2 b_5355_603b b_603b_989d b_7684_8ba2 u_8fc7 u_6ee4 u_8bed u_4e49 u_4e3a u_5927 u_4e8e u_7b49 b_8fc7_6ee4 b_6ee4_8bed b_8bed_4e49 b_4e49_4e3a b_4e3a_5927 b_5927_4e8e b_4e8e_7b49 b_7b49_4e8e u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0e u_67d0 u_76f8 u_8be5 u_5fc5 u_987b b_4e0e_67d0 b_67d0_8ba2 b_989d_76f8 b_76f8_7b49 b_7b49_65f6 b_65f6_8be5 b_8be5_8ba2 b_5355_5fc5 b_5fc5_987b b_987b_8fd4 3 u_672a b_672a_63d0 u_5ba2 u_6237 u_5168 u_90e8 b_56de_8be5 b_8be5_5ba2 b_5ba2_6237 b_6237_5168 b_5168_90e8 b_90e8_8ba2 u_884c u_65e2 u_7248 u_672c u_5b8c u_4e00 u_81f4 b_884c_4e3a b_4e3a_4e0e b_4e0e_65e2 b_65e2_6709 b_6709_7248 b_7248_672c b_672c_5b8c b_5b8c_5168 b_5168_4e00 b_4e00_81f4 4 u_4e0d u_5f97 u_6539 u_53d8 u_7ed3 u_679c u_6392 u_5e8f b_6ee4_4e0d b_4e0d_5f97 b_5f97_6539 b_6539_53d8 b_53d8_7ed3 b_7ed3_679c b_679c_6392 b_6392_5e8f u_4ecd u_6309 u_521b u_5efa u_95f4 u_5347 u_5217 b_679c_4ecd b_4ecd_6309 b_6309_521b b_521b_5efa b_5efa_65f6 b_65f6_95f4 b_95f4_5347 b_5347_5e8f b_5e8f_6392 b_6392_5217 u_540c b_540c_4e00 b_4e00_521b b_95f4_6309 order_id 5 u_4f5c u_5f53 u_6b21 u_8c03 b_6ee4_53ea b_53ea_4f5c b_4f5c_7528 b_7528_4e8e b_4e8e_5f53 b_5f53_6b21 b_6b21_8c03 b_8c03_7528 u_5f71 u_54cd u_4ed3 u_50a8 u_5b9e u_4f8b u_4e0a u_540e u_7eed u_5e26 b_5f97_5f71 b_5f71_54cd b_54cd_540c b_4e00_4ed3 b_4ed3_50a8 b_50a8_5b9e b_5b9e_4f8b b_4f8b_4e0a b_4e0a_540e b_540e_7eed b_7eed_4e0d b_4e0d_5e26 b_5e26_7b5b b_7684_67e5 b_8be2_7ed3 6 u_9ed8 u_8ba4 u_503c b_6570_5fc5 b_987b_5e26 b_5e26_9ed8 b_9ed8_8ba4 b_8ba4_503c u_4fdd u_8bc1 b_4fdd_8bc1 b_8bc1_65e2 b_6709_8c03 u_517c u_5bb9 u_6027 b_7684_517c b_517c_5bb9 b_5bb9_6027'}`
 - 命中数: 1;命中: `['spec_file:specs/SPEC-003-订单查询规格.md']`;耗时: 0.0 ms
 
+## 2026-10-31T03:48:52+00:00 — context-selection:spec_entry
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['spec_entry'], 'limit': 24}`
+- 命中数: 14;命中: `['spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-1#17791be895df0aad', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-4#55db31920c5a6a3f', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-6#dd2dc56b575ea56d', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-5#5235173b93edff3e', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-3#c3032fe586eae77a', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-2#90210b4ba07db20e', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-3#795de34d3f3096f1', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-1#6ef9b0daf2bd120f', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-2#0d37111367cf76b9', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-1#db50bea17a94a3a8', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-8#f5918f2e6bd63647', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-4#fdd07d606e8b30bc', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-2#04776bf9edbbfda4', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-3#6cb35b47310c4280']`;耗时: 3.72 ms
+
+## 2026-10-31T03:48:52+00:00 — context-selection:spec_file
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['spec_file'], 'limit': 9}`
+- 命中数: 3;命中: `['spec_file:specs/SPEC-003-订单查询规格.md', 'spec_file:specs/SPEC-002-折扣规则.md', 'spec_file:specs/SPEC-001-工程约束.md']`;耗时: 1.05 ms
+
+## 2026-10-31T03:48:52+00:00 — context-selection:code
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['code'], 'limit': 18}`
+- 命中数: 5;命中: `['code:sample-project/src/checkout/service.py#b813a15856690462', 'code:sample-project/src/checkout/pricing.py#d42ef5b15c7c58d2', 'code:sample-project/src/checkout/repository.py#99141255e9035147', 'code:sample-project/src/checkout/models.py#12900fee24408442', 'code:sample-project/src/checkout/__init__.py']`;耗时: 0.94 ms
+
+## 2026-10-31T03:48:52+00:00 — context-selection:test
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['test'], 'limit': 18}`
+- 命中数: 4;命中: `['test:sample-project/tests/test_service_orders.py#0fa160457b454b76', 'test:sample-project/tests/test_order_query_filter.py#f8b32bedfbacfb3a', 'test:sample-project/tests/test_repository.py#0ee34bf7554421ee', 'test:sample-project/tests/conftest.py#ecd939968dbbb970']`;耗时: 0.88 ms
+
+## 2026-10-31T03:49:39+00:00 — context-selection:spec_entry
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['spec_entry'], 'limit': 24}`
+- 命中数: 14;命中: `['spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-1#17791be895df0aad', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-4#55db31920c5a6a3f', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-6#dd2dc56b575ea56d', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-5#5235173b93edff3e', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-3#c3032fe586eae77a', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-2#90210b4ba07db20e', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-3#795de34d3f3096f1', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-1#6ef9b0daf2bd120f', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-2#0d37111367cf76b9', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-1#db50bea17a94a3a8', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-8#f5918f2e6bd63647', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-4#fdd07d606e8b30bc', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-2#04776bf9edbbfda4', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-3#6cb35b47310c4280']`;耗时: 3.45 ms
+
+## 2026-10-31T03:49:39+00:00 — context-selection:spec_file
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['spec_file'], 'limit': 9}`
+- 命中数: 3;命中: `['spec_file:specs/SPEC-003-订单查询规格.md', 'spec_file:specs/SPEC-002-折扣规则.md', 'spec_file:specs/SPEC-001-工程约束.md']`;耗时: 0.98 ms
+
+## 2026-10-31T03:49:39+00:00 — context-selection:code
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['code'], 'limit': 18}`
+- 命中数: 5;命中: `['code:sample-project/src/checkout/service.py#b813a15856690462', 'code:sample-project/src/checkout/pricing.py#d42ef5b15c7c58d2', 'code:sample-project/src/checkout/repository.py#99141255e9035147', 'code:sample-project/src/checkout/models.py#12900fee24408442', 'code:sample-project/src/checkout/__init__.py']`;耗时: 0.92 ms
+
+## 2026-10-31T03:49:39+00:00 — context-selection:test
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['test'], 'limit': 18}`
+- 命中数: 4;命中: `['test:sample-project/tests/test_service_orders.py#0fa160457b454b76', 'test:sample-project/tests/test_order_query_filter.py#f8b32bedfbacfb3a', 'test:sample-project/tests/test_repository.py#0ee34bf7554421ee', 'test:sample-project/tests/conftest.py#ecd939968dbbb970']`;耗时: 0.85 ms
+
+## 2026-10-31T03:50:56+00:00 — context-selection:spec_entry
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['spec_entry'], 'limit': 24}`
+- 命中数: 14;命中: `['spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-1#17791be895df0aad', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-4#55db31920c5a6a3f', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-6#dd2dc56b575ea56d', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-5#5235173b93edff3e', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-3#c3032fe586eae77a', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-2#90210b4ba07db20e', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-3#795de34d3f3096f1', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-1#6ef9b0daf2bd120f', 'spec_entry:specs/SPEC-002-折扣规则.md#SPEC-002-2#0d37111367cf76b9', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-1#db50bea17a94a3a8', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-8#f5918f2e6bd63647', 'spec_entry:specs/SPEC-003-订单查询规格.md#SPEC-003-4#fdd07d606e8b30bc', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-2#04776bf9edbbfda4', 'spec_entry:specs/SPEC-001-工程约束.md#SPEC-001-3#6cb35b47310c4280']`;耗时: 4.04 ms
+
+## 2026-10-31T03:50:56+00:00 — context-selection:spec_file
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['spec_file'], 'limit': 9}`
+- 命中数: 3;命中: `['spec_file:specs/SPEC-003-订单查询规格.md', 'spec_file:specs/SPEC-002-折扣规则.md', 'spec_file:specs/SPEC-001-工程约束.md']`;耗时: 0.98 ms
+
+## 2026-10-31T03:50:56+00:00 — context-selection:code
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['code'], 'limit': 18}`
+- 命中数: 5;命中: `['code:sample-project/src/checkout/service.py#b813a15856690462', 'code:sample-project/src/checkout/pricing.py#d42ef5b15c7c58d2', 'code:sample-project/src/checkout/repository.py#99141255e9035147', 'code:sample-project/src/checkout/models.py#12900fee24408442', 'code:sample-project/src/checkout/__init__.py']`;耗时: 0.9 ms
+
+## 2026-10-31T03:50:56+00:00 — context-selection:test
+
+```sql
+SELECT asset_id, kind, path, title, symbol, content, content_hash, version, imported_at, MATCH(searchable_text) AGAINST(:query) AS score FROM sdd_assets WHERE MATCH(searchable_text) AGAINST(:query) AND kind IN :kinds ORDER BY score DESC, asset_id LIMIT :limit
+```
+
+- 参数: `{'query(analyzed)': 'u_4e3a u_8ba2 u_5355 u_67e5 u_8be2 u_589e u_52a0 u_6700 u_5c0f u_91d1 u_989d u_7b5b u_9009 u_6761 u_4ef6 b_4e3a_8ba2 b_8ba2_5355 b_5355_67e5 b_67e5_8be2 b_8be2_589e b_589e_52a0 b_52a0_6700 b_6700_5c0f b_5c0f_91d1 b_91d1_989d b_989d_7b5b b_7b5b_9009 b_9009_6761 b_6761_4ef6 customer_orders u_652f u_6301 b_652f_6301 min_total u_53c2 u_6570 b_53c2_6570 u_542b u_8fb9 u_754c b_542b_8fb9 b_8fb9_754c u_4e0d u_5f71 u_54cd u_65e2 u_6709 u_8c03 u_7528 b_4e0d_5f71 b_5f71_54cd b_54cd_65e2 b_65e2_6709 b_6709_8c03 b_8c03_7528', 'kinds': ['test'], 'limit': 18}`
+- 命中数: 4;命中: `['test:sample-project/tests/test_service_orders.py#0fa160457b454b76', 'test:sample-project/tests/test_order_query_filter.py#f8b32bedfbacfb3a', 'test:sample-project/tests/test_repository.py#0ee34bf7554421ee', 'test:sample-project/tests/conftest.py#ecd939968dbbb970']`;耗时: 0.88 ms
+

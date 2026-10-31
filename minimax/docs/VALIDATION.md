@@ -83,7 +83,7 @@ export SDDCTX_MINIMAX_API_KEY="你的MiniMax API Key"
 ```
 
 **预期**:
-- 输出 `模型 MiniMax-M2.1;修改文件: sample-project/src/checkout/repository.py;…`;
+- 输出 `模型 MiniMax-M3.1-Flash;修改文件: sample-project/src/checkout/repository.py;…`;
 - `records/minimax/task-001-*/` 生成:`context.md`(即第 2 步上下文)、`minimax-request.json`(Key 已脱敏)、
   `minimax-response.md`(原文)、`before/`(修改前快照)、`applied-files.json`、`devlog.md`(开发记录)、`code.diff.md`;
 - 业务工程 `repository.py` 的 `min_total` 过滤被实现。

@@ -17,6 +17,7 @@
 
 ## 当前状态说明
 
-- MiniMax 开发记录在执行 `sddctx dev`(需要 `SDDCTX_MINIMAX_API_KEY`)后生成;
-  生成前本目录已包含其余全部记录样例。
+- 全部记录已生成:MiniMax 开发记录见 `minimax/task-001-20261031-034850/`
+  (模型 MiniMax-M3.1-Flash;修改 `sample-project/src/checkout/repository.py`,
+  与 `verify/` 中 before 失败→after 全绿对应)。
 - 记录中的密钥一律脱敏(`sddctx.config.redact`)。

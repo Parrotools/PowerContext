@@ -2,7 +2,7 @@
 
 - 国内平台 base_url: https://api.minimaxi.com/v1(默认)
 - 国际平台 base_url: https://api.minimax.io/v1
-- 模型通过 SDDCTX_MINIMAX_MODEL 配置,默认 MiniMax-M2.1
+- 模型通过 SDDCTX_MINIMAX_MODEL 配置,默认 MiniMax-M3.1-Flash(2026-10 在售;旧型号会随平台下线,可用 GET /v1/models 查询当前账号可用列表)
 
 仅做同步 HTTP 调用,响应原文全量留档,作为 MiniMax 开发记录的一部分。
 """

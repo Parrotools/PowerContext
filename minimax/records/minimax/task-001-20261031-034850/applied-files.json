@@ -1,0 +1,14 @@
+{
+  "task": "为订单查询增加最小金额筛选条件:customer_orders 支持 min_total 参数,含边界,不影响既有调用",
+  "task_id": "task-001",
+  "applied_at": "2026-10-31T03:49:01+00:00",
+  "model": "MiniMax-M3.1-Flash",
+  "files": [
+    {
+      "path": "sample-project/src/checkout/repository.py",
+      "bytes_written": 1371,
+      "sha256": "7a23debc83948c839d0542996445f1384dae04da6505177d21779a0cd2fe576c",
+      "existed_before": true
+    }
+  ]
+}

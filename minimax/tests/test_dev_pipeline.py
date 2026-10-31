@@ -70,6 +70,48 @@ class OrderRepository:
 已完成 SPEC-003 的最小金额过滤,保持排序与兼容性不变。
 """
 
+# 初始(未实现)版 repository.py:测试自备确定初始态,不依赖真实工程当前进度
+INITIAL_REPOSITORY = '''"""订单仓储。内存实现,提供订单查询接口(订单查询/查询接口/customer_orders 的底层实现)。"""
+
+from __future__ import annotations
+
+from decimal import Decimal
+
+from checkout.models import Order
+
+
+class OrderRepository:
+    """按客户查询订单、保存订单的内存仓储。"""
+
+    def __init__(self) -> None:
+        self._orders: dict[str, Order] = {}
+
+    def add(self, order: Order) -> None:
+        self._orders[order.order_id] = order
+
+    def get(self, order_id: str) -> Order | None:
+        return self._orders.get(order_id)
+
+    def for_customer(
+        self,
+        customer_id: str,
+        min_total: Decimal | None = None,
+    ) -> list[Order]:
+        """按客户查询订单,结果按创建时间升序排列(同一时间按 order_id 升序)。
+
+        SPEC-003 要求:提供 min_total 时,只返回订单总额 >= min_total 的订单
+        (含边界,min_total 与某订单总额相等时该订单必须返回)。
+
+        TODO(SPEC-003): min_total 过滤行为尚未实现,当前直接返回全部订单。
+        """
+        orders = [order for order in self._orders.values() if order.customer_id == customer_id]
+        orders.sort(key=lambda order: (order.created_at, order.order_id))
+        if min_total is not None:
+            # SPEC-003 未实现:此处应过滤订单总额 >= min_total 的订单。
+            pass
+        return orders
+'''
+
 
 class _StubMiniMaxHandler(BaseHTTPRequestHandler):
     def do_POST(self):  # noqa: N802
@@ -101,6 +143,10 @@ def _make_settings(tmp_path: Path) -> tuple[Settings, HTTPServer]:
     """在临时 home 中复制规格与业务工程;配置指向临时目录与本机桩服务器。"""
     shutil.copytree(_HOME / "sample-project", tmp_path / "sample-project")
     shutil.copytree(_HOME / "specs", tmp_path / "specs")
+    # 固定为“未实现”初始态,使测试与真实工程的修改进度无关
+    (tmp_path / "sample-project" / "src" / "checkout" / "repository.py").write_text(
+        INITIAL_REPOSITORY, encoding="utf-8"
+    )
     httpd = HTTPServer(("127.0.0.1", 0), _StubMiniMaxHandler)
     port = httpd.server_address[1]
     settings = Settings.load()
@@ -112,7 +158,7 @@ def _make_settings(tmp_path: Path) -> tuple[Settings, HTTPServer]:
         "powercontext_url": "http://127.0.0.1:1",  # 不可达:验证降级路径
         "minimax_api_key": "stub-key-for-pipeline-test",
         "minimax_base_url": f"http://127.0.0.1:{port}/v1",
-        "minimax_model": "MiniMax-M2.1",
+        "minimax_model": "MiniMax-M3.1-Flash",
     }.items():
         object.__setattr__(settings, name, value)
     return settings, httpd
@@ -127,7 +173,7 @@ def test_dev_pipeline_end_to_end(tmp_path: Path):
         result = run_dev(settings, TASK, "task-001")
         # 请求结构正确(OpenAI 兼容)
         request_body = httpd.last_request
-        assert request_body["model"] == "MiniMax-M2.1"
+        assert request_body["model"] == "MiniMax-M3.1-Flash"
         assert any(message["role"] == "system" for message in request_body["messages"])
         user_messages = [m for m in request_body["messages"] if m["role"] == "user"]
         assert "SPEC-003-1" in user_messages[0]["content"]  # 上下文进入了提示词
