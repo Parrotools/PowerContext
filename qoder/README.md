@@ -88,7 +88,7 @@ npm run dev
 
 线上站点 https://zhixu-2t2jbr5w1wu.qoder.zone 是静态项目展示页，提供项目介绍、真实截图、验证结果和运行说明，不包含后端与数据库。要实际使用应用，请按方式 A 在本机启动后端和前端。站点对未知路径会回退到项目主页，因此直接访问应用直达链接时请从主页入口进入。
 
-> 若需要在 Qoder Sites 页面内连接本机后端，请先按第 2 步启动 Docker 后端；浏览器会发起 Private Network Access 预检，后端已支持该预检。
+> 在线页面的应用路由可以打开，但数据请求需要访问本机 `localhost:8000`。部分浏览器会因 Local Network Access 权限限制拦截该跨域请求，因此评审请以方式 A（本地前端）为准；后端已配置 CORS 与 Private Network Access 预检，在允许权限的浏览器中也可连通。
 
 ---
 
@@ -124,11 +124,11 @@ python verify.py
 
 [5/6] Chat - SeekDB Retrieval + PowerContext Memory
   [PASS] Chat returns sources           retrieved 5 sources from SeekDB
-  [PASS] Memory written and recalled    recalled 3380 bytes of prepared context
+  [PASS] Memory written and recalled    recalled 3417 bytes of prepared context
   [PASS] Recalled memory matches question
   [PASS] Backend restarted
   [PASS] Backend healthy after restart  GET /api/health -> 200
-  [PASS] Memory survived restart        recalled 3386 bytes after restart
+  [PASS] Memory survived restart        recalled 3440 bytes after restart
 
 [6/6] PowerContext - Direct Memory Verification
   [PASS] PowerContext reachable         health status: 200
@@ -333,7 +333,7 @@ curl -X POST http://localhost:8000/api/chat/message -H "Content-Type: applicatio
 }
 ```
 
-在 `verify.py` 的同项实测中，重启后端后再次提问，`memory_context` 仍返回 3386 字节且包含本次问答的随机标记——这条链路由第 5 节自动验证（见“方式 A”的输出）。
+在 `verify.py` 的同项实测中，重启后端后再次提问，`memory_context` 仍返回 3440 字节且包含本次问答的随机标记——这条链路由第 5 节自动验证（见“方式 A”的输出）。
 
 > **可选：配置 LLM 获得真实回答**
 >

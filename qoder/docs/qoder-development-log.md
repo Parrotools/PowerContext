@@ -80,7 +80,7 @@
 
 ## 五、测试记录
 
-### 1. 自动验证（真实输出，2026-10-31 12:06）
+### 1. 自动验证（真实输出，2026-10-31 12:24）
 
 ```text
 [1/6] Health Check
@@ -109,11 +109,11 @@
   [PASS] Chat API
   [PASS] Chat returns sources           retrieved 5 sources from SeekDB
   [PASS] Source has relevance score     score: 0.2205
-  [PASS] Memory written and recalled    recalled 3380 bytes of prepared context
+  [PASS] Memory written and recalled    recalled 3417 bytes of prepared context
   [PASS] Recalled memory matches question
   [PASS] Backend restarted
   [PASS] Backend healthy after restart  GET /api/health -> 200
-  [PASS] Memory survived restart        recalled 3386 bytes after restart
+  [PASS] Memory survived restart        recalled 3440 bytes after restart
 
 [6/6] PowerContext - Direct Memory Verification
   [PASS] PowerContext reachable         health status: 200
@@ -132,4 +132,4 @@ ALL CHECKS PASSED
 
 ### 3. 真实记忆输出
 
-详见 `README.md`“真实记忆读写输出”一节，节选与本次测试一致：写入后立即召回 3380 字节，重启后召回 3386 字节，二者都包含当次问答的随机标记。
+详见 `README.md`“真实记忆读写输出”一节，节选与本次测试一致：写入后立即召回 3417 字节，重启后召回 3440 字节，二者都包含当次问答的随机标记。

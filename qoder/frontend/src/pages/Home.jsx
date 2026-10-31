@@ -115,7 +115,7 @@ export default function Home() {
             <a href="#screenshots" className="hover:text-brand-700">真实截图</a>
             <a href="#verify" className="hover:text-brand-700">验证结果</a>
             <a href="#run" className="hover:text-brand-700">本地体验</a>
-            <a href={DEV_LOG_URL} target="_blank" rel="noreferrer" className="hover:text-brand-700">开发记录</a>
+            <a href="#devlog" className="hover:text-brand-700">开发记录</a>
           </nav>
           <div className="flex items-center gap-2">
             <a
@@ -188,7 +188,7 @@ export default function Home() {
                 { value: '25/25', label: '自动验证通过' },
                 { value: '6', label: '预置学习文档' },
                 { value: '4', label: '核心功能页面' },
-                { value: '3386 B', label: '重启后召回上下文' },
+                { value: '3.4 KB', label: '重启后召回上下文' },
               ].map(item => (
                 <div key={item.label} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                   <p className="text-2xl font-extrabold text-brand-700">{item.value}</p>
@@ -200,7 +200,7 @@ export default function Home() {
                   <ShieldCheck size={16} /> 记忆闭环已验证
                 </div>
                 <p className="mt-1.5 text-xs leading-5 text-green-700">
-                  聊天写入 → 后端重启 → 同一问题再次召回，PowerContext 返回 3386 字节历史上下文。
+                  聊天写入 → 后端重启 → 同一问题再次召回，PowerContext 返回约 3.4 KB 历史上下文。
                 </p>
               </div>
             </div>
@@ -334,6 +334,83 @@ export default function Home() {
               <p className="mt-4 text-xs leading-5 text-slate-400">
                 artifact_id 与 revision 来自 PowerContext 返回的真实记忆引用；同一问题在后端重启后仍能命中。
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="devlog" className="border-b border-gray-200 bg-white">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+            <SectionTitle
+              eyebrow="开发记录"
+              title="从 Qoder 会话到可核对的提交"
+              desc="以下时间线来自真实开发会话与仓库提交，完整需求、产出文件和测试记录见 docs/qoder-development-log.md。"
+            />
+            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+              <ol className="space-y-4 border-l border-gray-200 pl-5">
+                {[
+                  {
+                    time: '09:20',
+                    title: '搭建全栈应用',
+                    commit: 'f5e6cce7',
+                    desc: 'FastAPI + React + Docker + 验证脚本，43 个文件、3269 行。',
+                  },
+                  {
+                    time: '10:45',
+                    title: '修复记忆往返',
+                    commit: 'f9881aef',
+                    desc: '统一 scope、归一化 prepare 查询，补上记忆召回检查。',
+                  },
+                  {
+                    time: '12:05',
+                    title: '闭环与项目主页',
+                    commit: '99b6ee19',
+                    desc: '修正 422 请求体、scope 持久化、CORS/PNA，加入重启召回验证与根路由主页。',
+                  },
+                  {
+                    time: '12:20',
+                    title: '记录提交 SHA',
+                    commit: 'aaa73fe9',
+                    desc: '把时间线、测试输出和提交号写回开发记录。',
+                  },
+                ].map(item => (
+                  <li key={item.commit} className="relative">
+                    <span className="absolute -left-[27px] top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600" />
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <span>{item.time}</span>
+                      <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-gray-700">{item.commit}</code>
+                    </div>
+                    <p className="mt-1 text-sm font-semibold text-gray-900">{item.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-gray-600">{item.desc}</p>
+                  </li>
+                ))}
+              </ol>
+              <div className="rounded-2xl border border-gray-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-gray-900">最近一次验收（2026-10-31）</p>
+                <dl className="mt-4 grid grid-cols-2 gap-3">
+                  {[
+                    { value: '25/25', label: '检查通过' },
+                    { value: '0', label: '失败 / 跳过' },
+                    { value: '3417 B', label: '写入后召回' },
+                    { value: '3440 B', label: '重启后召回' },
+                  ].map(item => (
+                    <div key={item.label} className="rounded-xl border border-gray-200 bg-white p-3">
+                      <dt className="text-lg font-bold text-brand-700">{item.value}</dt>
+                      <dd className="mt-0.5 text-xs text-gray-500">{item.label}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <a
+                  href={DEV_LOG_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800"
+                >
+                  <BookOpen size={16} /> 在 GitHub 查看完整开发记录
+                </a>
+                <p className="mt-2 text-xs leading-5 text-gray-500">
+                  同一文件也保存在本地仓库 qoder/docs/qoder-development-log.md。
+                </p>
+              </div>
             </div>
           </div>
         </section>
