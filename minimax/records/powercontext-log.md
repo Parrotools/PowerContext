@@ -484,3 +484,122 @@
 }
 ```
 
+## 2026-10-31T01:36:41+00:00 — scope.reuse
+
+```json
+{
+  "scope_id": "scp_12v95t106ah3d4cjjzz7zt9wja",
+  "title": "sddctx:minimax-sdd"
+}
+```
+
+## 2026-10-31T01:36:41+00:00 — memory.remember
+
+```json
+{
+  "scope_id": "scp_12v95t106ah3d4cjjzz7zt9wja",
+  "kind": "task-board",
+  "text_head": "{\"query_key\": \"sddctx task-board pytest-task\", \"task_id\": \"pytest-task\", \"objective\": \"测试看板写入与读取\", \"completed\": [\"写入看板\"], \"pending\": [\"读取看板\"], \"verification\": [], \"updated_at\": \"2026-10-31T01:36:40+00",
+  "citation": {
+    "memory_ref": {
+      "family": "memory",
+      "artifact_id": "memory",
+      "revision": 5
+    },
+    "entry_id": "mem_ent_a78056e3f8b941f7ace97268a820bbec",
+    "entry_version_id": "mem_ver_0140758531534a978560149c07b483d6"
+  }
+}
+```
+
+## 2026-10-31T01:36:41+00:00 — board.save
+
+```json
+{
+  "task_id": "pytest-task",
+  "citation": {
+    "memory_ref": {
+      "family": "memory",
+      "artifact_id": "memory",
+      "revision": 5
+    },
+    "entry_id": "mem_ent_a78056e3f8b941f7ace97268a820bbec",
+    "entry_version_id": "mem_ver_0140758531534a978560149c07b483d6"
+  }
+}
+```
+
+## 2026-10-31T01:36:41+00:00 — scope.reuse
+
+```json
+{
+  "scope_id": "scp_12v95t106ah3d4cjjzz7zt9wja",
+  "title": "sddctx:minimax-sdd"
+}
+```
+
+## 2026-10-31T01:36:41+00:00 — memory.search
+
+```json
+{
+  "scope_id": "scp_12v95t106ah3d4cjjzz7zt9wja",
+  "query": "sddctx task-board pytest-task",
+  "hits": [
+    {
+      "memory_ref": {
+        "family": "memory",
+        "artifact_id": "memory",
+        "revision": 5
+      },
+      "entry_id": "mem_ent_4205bcc7e8d548379267b4795316298e",
+      "entry_version_id": "mem_ver_d3a95a6dcdaa4914b64f22ff559c3440"
+    },
+    {
+      "memory_ref": {
+        "family": "memory",
+        "artifact_id": "memory",
+        "revision": 5
+      },
+      "entry_id": "mem_ent_a78056e3f8b941f7ace97268a820bbec",
+      "entry_version_id": "mem_ver_0140758531534a978560149c07b483d6"
+    },
+    {
+      "memory_ref": {
+        "family": "memory",
+        "artifact_id": "memory",
+        "revision": 5
+      },
+      "entry_id": "mem_ent_0d50c7df46e54846b51cc60b23591fb6",
+      "entry_version_id": "mem_ver_fbf251d62ec44e8f9bc0a088bbbb734c"
+    },
+    {
+      "memory_ref": {
+        "family": "memory",
+        "artifact_id": "memory",
+        "revision": 5
+      },
+      "entry_id": "mem_ent_d5deb3fd3e714d4fa94659ecbfc6dd74",
+      "entry_version_id": "mem_ver_1380152c5c564ba1834466c88842bb18"
+    },
+    {
+      "memory_ref": {
+        "family": "memory",
+        "artifact_id": "memory",
+        "revision": 5
+      },
+      "entry_id": "mem_ent_15e80e47178a401a83f82a4ec879f987",
+      "entry_version_id": "mem_ver_2985f3c12cd24dce9c82056a8ce5f0c1"
+    }
+  ]
+}
+```
+
+## 2026-10-31T01:36:50+00:00 — scope.reuse
+
+```json
+{
+  "scope_id": "scp_12v95t106ah3d4cjjzz7zt9wja",
+  "title": "sddctx:minimax-sdd"
+}
+```
+

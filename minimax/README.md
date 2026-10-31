@@ -10,6 +10,20 @@
 **seekdb** 检索,按开发任务组装出带真实来源的开发上下文,交给 **MiniMax** 完成代码修改,
 用目标/回归测试验证,并把任务进展与验证结果存入 **PowerContext**,重启后可恢复继续。
 
+```
+                ┌──────────────────────────  sddctx CLI  ──────────────────────────┐
+  specs/        │  import ────► seekdb(工程资料 + 原生全文索引)                    │
+  sample-project│  context ───► 检索选择(规格条目/代码/测试)──► 开发上下文(带来源)│
+  (业务工程)    │      ▲                         │                                 │
+                │      │                         ▼                                 │
+                │  task_state ◄── PowerContext(看板/验证结果/dev-run,重启可复用)   │
+                │      │                                                            │
+                │  dev ───────► MiniMax(OpenAI 兼容)──► 解析 FILE 块 ──► 应用补丁  │
+                │  verify ────► 目标/回归测试 ──► 结果写回 PowerContext             │
+                └──────────────────────────────────────────────────────────────────┘
+                       records/:db-query-log / powercontext-log / minimax/* / verify/*
+```
+
 ## 目录结构
 
 ```

@@ -152,6 +152,12 @@ def run_dev(settings: Settings, task: str, task_id: str, run_dir: Path | None = 
 
     blocks = parse_file_blocks(result.content)
     if not blocks:
+        lowered = result.content[:4000].lower()
+        if "```diff" in lowered or "\n--- a/" in result.content or "\n+++ b/" in result.content:
+            raise MiniMaxError(
+                "MiniMax 输出的是 diff 而非 FILE 块。已留存原文于 minimax-response.md;"
+                "请重试(模型偶尔不遵守输出格式),或人工把 diff 转换为完整文件后重跑。"
+            )
         raise MiniMaxError(
             "MiniMax 输出中没有可解析的 FILE 块。请检查 minimax-response.md,"
             "或重试(提示词要求 === FILE: path === 围栏块)。"
