@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir "powercontext[cli,server]==1.4.1"
+
+# Create data and workspace directories
+RUN mkdir -p /data /workspace
+
+WORKDIR /workspace
+
+EXPOSE 8010
+
+# Run PowerContext server
+# Configuration is via POWERCONTEXT_SERVER_* environment variables (set in docker-compose.yml)
+CMD ["powercontext", "server", "run", "--host", "0.0.0.0", "--port", "8010"]
