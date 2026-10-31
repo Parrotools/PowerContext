@@ -2,6 +2,8 @@
 
 > 越用越懂你的个人学习助手，基于 SeekDB 混合检索 + PowerContext 记忆引擎
 
+**在线体验**：https://zhixu-2t2jbr5w1wu.qoder.zone
+
 ---
 
 ## 评审运行说明
