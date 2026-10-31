@@ -1,0 +1,30 @@
+{
+  "phase": "before",
+  "accepted": true,
+  "reason": "目标测试按预期失败(行为未实现),失败节点: tests/test_order_query_filter.py::test_min_total_returns_only_matching_orders, tests/test_order_query_filter.py::test_min_total_above_everything_returns_empty",
+  "code_version": "3f2940183e22ee0b9b9383664c7917b1fa04f9d6",
+  "target": {
+    "command": "/Users/zigeqiao/workspace/powercontext/minimax/.venv/bin/python -m pytest tests/test_order_query_filter.py",
+    "exit_code": 1,
+    "duration_s": 0.12,
+    "summary": "2 failed, 5 passed in 0.01s",
+    "failed_nodes": [
+      "tests/test_order_query_filter.py::test_min_total_returns_only_matching_orders",
+      "tests/test_order_query_filter.py::test_min_total_above_everything_returns_empty"
+    ],
+    "passed": false,
+    "log_path": "/Users/zigeqiao/workspace/powercontext/minimax/records/verify/target-before-20261030-173221.log"
+  },
+  "regression": {
+    "command": "/Users/zigeqiao/workspace/powercontext/minimax/.venv/bin/python -m pytest tests",
+    "exit_code": 1,
+    "duration_s": 0.12,
+    "summary": "2 failed, 18 passed in 0.01s",
+    "failed_nodes": [
+      "tests/test_order_query_filter.py::test_min_total_returns_only_matching_orders",
+      "tests/test_order_query_filter.py::test_min_total_above_everything_returns_empty"
+    ],
+    "passed": false,
+    "log_path": "/Users/zigeqiao/workspace/powercontext/minimax/records/verify/regression-before-20261030-173221.log"
+  }
+}

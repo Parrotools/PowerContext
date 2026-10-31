@@ -1,0 +1,27 @@
+{
+  "task_id": "task-001",
+  "title": "为订单查询增加最小金额筛选条件",
+  "task": "为订单查询增加最小金额筛选条件:OrderService.customer_orders(customer_id, min_total=None),提供 min_total(Decimal)时只返回订单总额 >= min_total 的订单(含边界),未提供时行为与既有版本一致;排序与既有调用兼容性不受影响。",
+  "required_spec_sources": [
+    "specs/SPEC-003-订单查询规格.md#SPEC-003-1",
+    "specs/SPEC-003-订单查询规格.md#SPEC-003-2",
+    "specs/SPEC-003-订单查询规格.md#SPEC-003-3",
+    "specs/SPEC-003-订单查询规格.md#SPEC-003-4",
+    "specs/SPEC-003-订单查询规格.md#SPEC-003-5",
+    "specs/SPEC-003-订单查询规格.md#SPEC-003-6",
+    "specs/SPEC-001-工程约束.md#SPEC-001-3",
+    "specs/SPEC-001-工程约束.md#SPEC-001-4"
+  ],
+  "required_code_sources": [
+    "sample-project/src/checkout/repository.py",
+    "sample-project/src/checkout/service.py"
+  ],
+  "required_test_sources": [
+    "sample-project/tests/test_order_query_filter.py",
+    "sample-project/tests/test_service_orders.py",
+    "sample-project/tests/test_repository.py"
+  ],
+  "target_tests": ["tests/test_order_query_filter.py"],
+  "regression_tests": ["tests"],
+  "reset": "bash examples/run-task-filter/run-demo.sh 自带重置;或 .venv/bin/sddctx reset --force && git checkout -- sample-project specs"
+}

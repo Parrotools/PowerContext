@@ -1,0 +1,24 @@
+{
+  "phase": "after",
+  "accepted": true,
+  "reason": "目标测试与回归测试全部通过。",
+  "code_version": "093bfd25edd1bf471563c8d0224c83a3676c5d0e",
+  "target": {
+    "command": "/Users/zigeqiao/workspace/powercontext/minimax/.venv/bin/python -m pytest tests/test_order_query_filter.py",
+    "exit_code": 0,
+    "duration_s": 0.14,
+    "summary": "7 passed in 0.00s",
+    "failed_nodes": [],
+    "passed": true,
+    "log_path": "/Users/zigeqiao/workspace/powercontext/minimax/records/verify/target-after-20261031-034913.log"
+  },
+  "regression": {
+    "command": "/Users/zigeqiao/workspace/powercontext/minimax/.venv/bin/python -m pytest tests",
+    "exit_code": 0,
+    "duration_s": 0.11,
+    "summary": "20 passed in 0.01s",
+    "failed_nodes": [],
+    "passed": true,
+    "log_path": "/Users/zigeqiao/workspace/powercontext/minimax/records/verify/regression-after-20261031-034913.log"
+  }
+}

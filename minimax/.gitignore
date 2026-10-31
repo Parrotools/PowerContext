@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+
+# sddctx local runtime state (resettable, not part of the submission)
+.sddctx-data/
+
+# pytest
+.pytest_cache/

@@ -1,0 +1,9 @@
+# sddctx 体检
+✔ seekdb: 可用;库内资产 27 条
+✔ PowerContext Server: http://127.0.0.1:8000 → HTTP 200
+✔ PowerContext scope: 就绪(scope_id=scp_12v95t106ah3d4cjjzz7zt9wja)
+▲ MiniMax API Key: 未配置;仅影响 sddctx dev 步骤
+✔ MiniMax 接入点/模型: https://api.minimaxi.com/v1 / MiniMax-M2.1
+✔ 业务工程测试: 可收集 20 个用例(exit=0)
+
+结论:可以运行验证样例(warn 项按说明处理)
