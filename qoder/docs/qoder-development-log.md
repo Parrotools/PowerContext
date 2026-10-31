@@ -6,7 +6,7 @@
 - 仓库：<https://github.com/Parrotools/PowerContext>
 - 分支：`2026-competition-ecosystem`
 - 子目录：`qoder/`
-- 应用代码截止提交：`f9881aef`（本轮修复见 `git log`）
+- 应用代码截止提交：`99b6ee19`
 
 ## 一、时间线
 
@@ -17,8 +17,8 @@
 | 10:45 | 记忆闭环（第一轮） | 修复 PowerContext 调用：统一 scope、prepare 查询归一化、调整 verify 检查 | `f9881aef` fix(qoder): repair PowerContext memory round-trip |
 | 11:00–11:40 | 测评问题定位 | 针对“数据或记忆无法正确读回和复用”，逐项核对 PowerContext 1.4.1 契约、scope 生命周期、浏览器跨域和部署可达性 | 定位到 4 类根因（见第二节） |
 | 11:40–12:05 | 记忆闭环（第二轮） | 修复 422 请求体、scope 持久化、CORS/PNA、记忆类型、聊天写入记忆；verify 增加“写入→重启→召回” | 全部检查通过（25/25） |
-| 12:05–12:30 | 项目主页 | 新增根路由项目主页，应用迁到 `/dashboard` 等路由；补真实截图、仓库/文档链接、本地体验说明 | 本轮提交（见 `git log`） |
-| 12:30 起 | 文档与验收 | 补本开发记录、重写 README 运行说明、重新构建部署，并用未登录浏览器完整走查 | 本轮提交（见 `git log`） |
+| 12:05–12:30 | 项目主页 | 新增根路由项目主页，应用迁到 `/dashboard` 等路由；补真实截图、仓库/文档链接、本地体验说明 | `99b6ee19` |
+| 12:30 起 | 文档与验收 | 补本开发记录、重写 README 运行说明、重新构建部署，并用未登录浏览器完整走查 | `99b6ee19` |
 
 ## 二、主要需求与处理
 
@@ -76,7 +76,7 @@
 | `f5e6cce7` | feat(qoder): add ZhiXu learning assistant — full-stack project for 2026 competition |
 | `38d8ce97` | docs(qoder): add Qoder Sites URL to README |
 | `f9881aef` | fix(qoder): repair PowerContext memory round-trip |
-| 本轮提交 | 修复 422 / scope 持久化 / CORS / 记忆闭环验证 + 项目主页 + 开发记录 + README（推送后以 `git log` 中的 SHA 为准） |
+| `99b6ee19` | fix(qoder): close PowerContext memory loop and add project homepage（422 / scope 持久化 / CORS / 重启召回验证 + 项目主页 + 开发记录 + README） |
 
 ## 五、测试记录
 
