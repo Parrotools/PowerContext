@@ -52,9 +52,21 @@ workflow:
         isInIteration: false
         isInLoop: false
         sourceType: start
-        targetType: http-request
-      id: 1001-source-1002-target
+        targetType: code
+      id: 1001-source-1006-target
       source: '1001'
+      sourceHandle: source
+      target: '1006'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: 1006-source-1002-target
+      source: '1006'
       sourceHandle: source
       target: '1002'
       targetHandle: target
@@ -88,9 +100,21 @@ workflow:
         isInIteration: false
         isInLoop: false
         sourceType: llm
-        targetType: http-request
-      id: 1004-source-1005-target
+        targetType: code
+      id: 1004-source-1007-target
       source: '1004'
+      sourceHandle: source
+      target: '1007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: 1007-source-1005-target
+      source: '1007'
       sourceHandle: source
       target: '1005'
       targetHandle: target
@@ -128,6 +152,47 @@ workflow:
       type: custom
       width: 244
     - data:
+        code: |
+          import json
+
+          def main(scope_id: str, query: str) -> dict:
+              payload = {
+                  "scope_id": scope_id,
+                  "query": "客栈记仇 " + (query or ""),
+                  "max_bytes": 2000,
+              }
+              return {"body": json.dumps(payload, ensure_ascii=False)}
+        code_language: python3
+        desc: Encode the prepare body so quotes and backslashes stay inside JSON strings.
+        outputs:
+          body:
+            children: null
+            type: string
+        selected: false
+        title: 编码读取请求
+        type: code
+        variables:
+        - value_selector:
+          - env
+          - POWERCONTEXT_SCOPE
+          variable: scope_id
+        - value_selector:
+          - sys
+          - query
+          variable: query
+      height: 82
+      id: '1006'
+      position:
+        x: 360
+        y: 280
+      positionAbsolute:
+        x: 360
+        y: 280
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
         authorization:
           config: null
           type: no-auth
@@ -136,8 +201,8 @@ workflow:
           - id: prepare-body
             key: ''
             type: text
-            value: '{"scope_id":"{{#env.POWERCONTEXT_SCOPE#}}","query":"客栈记仇 {{#sys.query#}}","max_bytes":2000}'
-          type: json
+            value: '{{#1006.body#}}'
+          type: raw-text
         desc: Read previously saved grudges. An empty result is a first meeting.
         headers: 'Content-Type: application/json'
         method: post
@@ -159,10 +224,10 @@ workflow:
       height: 124
       id: '1002'
       position:
-        x: 380
+        x: 640
         y: 280
       positionAbsolute:
-        x: 380
+        x: 640
         y: 280
       sourcePosition: right
       targetPosition: left
@@ -202,10 +267,10 @@ workflow:
       height: 82
       id: '1003'
       position:
-        x: 680
+        x: 920
         y: 280
       positionAbsolute:
-        x: 680
+        x: 920
         y: 280
       sourcePosition: right
       targetPosition: left
@@ -241,10 +306,52 @@ workflow:
       height: 98
       id: '1004'
       position:
-        x: 980
+        x: 1200
         y: 280
       positionAbsolute:
-        x: 980
+        x: 1200
+        y: 280
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: |
+          import json
+
+          def main(scope_id: str, query: str) -> dict:
+              payload = {
+                  "scope_id": scope_id,
+                  "kind": "decision",
+                  "text": "客栈记仇：客人刚刚做了这件事：" + (query or ""),
+                  "reason": "innkeeper demo turn",
+              }
+              return {"body": json.dumps(payload, ensure_ascii=False)}
+        code_language: python3
+        desc: Encode the remember body so quotes and backslashes stay inside JSON strings.
+        outputs:
+          body:
+            children: null
+            type: string
+        selected: false
+        title: 编码写入请求
+        type: code
+        variables:
+        - value_selector:
+          - env
+          - POWERCONTEXT_SCOPE
+          variable: scope_id
+        - value_selector:
+          - sys
+          - query
+          variable: query
+      height: 82
+      id: '1007'
+      position:
+        x: 1480
+        y: 280
+      positionAbsolute:
+        x: 1480
         y: 280
       sourcePosition: right
       targetPosition: left
@@ -259,8 +366,8 @@ workflow:
           - id: remember-body
             key: ''
             type: text
-            value: '{"scope_id":"{{#env.POWERCONTEXT_SCOPE#}}","kind":"decision","text":"客栈记仇：客人刚刚做了这件事：{{#sys.query#}}","reason":"innkeeper demo turn"}'
-          type: json
+            value: '{{#1007.body#}}'
+          type: raw-text
         desc: Save this turn so a later conversation can retrieve it.
         headers: 'Content-Type: application/json'
         method: post
@@ -282,10 +389,10 @@ workflow:
       height: 124
       id: '1005'
       position:
-        x: 1280
+        x: 1760
         y: 280
       positionAbsolute:
-        x: 1280
+        x: 1760
         y: 280
       sourcePosition: right
       targetPosition: left
@@ -301,10 +408,10 @@ workflow:
       height: 105
       id: answer
       position:
-        x: 1580
+        x: 2040
         y: 280
       positionAbsolute:
-        x: 1580
+        x: 2040
         y: 280
       sourcePosition: right
       targetPosition: left

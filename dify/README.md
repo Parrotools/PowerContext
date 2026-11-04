@@ -47,7 +47,9 @@ python dify/init_scope.py
 6. 若 PowerContext 开启了鉴权，在两个 HTTP 节点的 Header 里追加 `Authorization: Bearer <token>`。token 放在 Dify 的密钥配置里，不要提交到仓库。默认的本地服务不需要这一步。
 7. 发布应用，从 Dify 的对话页面进入。
 
-导入时如果提示 DSL 版本较旧，选择升级后继续。两个 HTTP 节点的地址分别是：
+导入时如果提示 DSL 版本较旧，选择升级后继续。用户原话不直接拼进 JSON 字符串。节点「编码读取请求」和「编码写入请求」先用 `json.dumps` 生成完整请求体，HTTP 节点按 raw text 原样发送。一句里的引号和反斜杠会留在字符串内部。
+
+两个 HTTP 节点的地址分别是：
 
 - `POST /v1/context/prepare`
 - `POST /v1/memory/remember`
@@ -74,13 +76,19 @@ python dify/init_scope.py
 
 恢复初始状态：用另一个 `idempotency_key` 重新运行 `init_scope.py`，把新的 scope id 填回 Dify。
 
-## 需要留下的证据
+## 已提交的读写记录
 
-评审要看到可运行的应用，不只要文档。请附上：
+`dify/evidence/rounds.json` 是 2026-11-04 对本机 PowerContext `http://127.0.0.1:8000` 打的两场独立 HTTP 对话，scope 是 `scp_4mjmng9kmxs6y1125bwmn6z3df`。第一场 prepare 返回 `status: empty`，remember 把带引号和反斜杠的原句写进记忆。第二场是新的请求，只调用 prepare，读回的 `content` 含有「招牌酒换成了醋」和那句带引号的话。两场请求不共享 Dify 会话，只共享同一个 scope。重新生成：
+
+```bash
+python dify/prove_rounds.py
+```
+
+## 还要交给平台的 Dify 记录
+
+重新导入更新后的 `dify/innkeeper-grudge.yml`，再跑下面两场，把节点记录和 `evidence/rounds.json` 一起交上去：
 
 - 导入后的应用页面。
-- 第一场和第二场的对话截图。第二场必须是新对话。
-- 两场对话中「读取旧账」和「记下这次」两个节点的输入、输出和状态码。
-- `init_scope.py` 打印出的 scope id。可以打码，但要能对上环境变量里的值。
-
-这些截图不要放进公开仓库。和 DSL、本说明一起交给提测平台。
+- 第一场和第二场的对话。第二场必须新开对话。
+- 两场里「读取旧账」和「记下这次」的请求体、响应和状态码。请求体应是合法 JSON，即使用户句子里有引号。
+- 环境变量里的 scope id，可以打码，但要能对上 `init_scope.py` 的输出。
