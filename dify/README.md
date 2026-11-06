@@ -84,11 +84,12 @@ python dify/init_scope.py
 python dify/prove_rounds.py
 ```
 
-## 还要交给平台的 Dify 记录
+## Dify 运行记录
 
-重新导入更新后的 `dify/innkeeper-grudge.yml`，再跑下面两场，把节点记录和 `evidence/rounds.json` 一起交上去：
+2026-11-07 在 cloud.dify.ai 导入并发布「记仇的客栈老板」后的运行截图：
 
-- 导入后的应用页面。
-- 第一场和第二场的对话。第二场必须新开对话。
-- 两场里「读取旧账」和「记下这次」的请求体、响应和状态码。请求体应是合法 JSON，即使用户句子里有引号。
-- 环境变量里的 scope id，可以打码，但要能对上 `init_scope.py` 的输出。
+- `dify/evidence/dify-chat-turn1.png`：第一场发送「我把你的招牌酒换成了醋」。
+- `dify/evidence/dify-chat-turn2.png`：接着发送「老板，我又来了，昨晚的事你还记得吗」，回复点名招牌酒换成了醋。
+- `dify/evidence/dify-prepare-node.png`：「读取旧账」上次运行。请求发往公网地址上的 `POST /v1/context/prepare`，状态为成功。输出里的 `content` 含有「客人刚刚做了这件事：我把你的招牌酒换成了醋」。同屏预览的回复也点了这件事。
+
+「记下这次」节点在前两张图的画布上为绿色成功。scope 与当次服务一致，截图里的公网地址是临时转发，过期后不能再访问。
